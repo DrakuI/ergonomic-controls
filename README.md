@@ -9,11 +9,9 @@ Shortcuts that fit your hands, and a browser that stays out of the game.
 ## Features
 
 1. Control Profiles, in the module settings: keyboard, mouse and controller maps with every shortcut colored by reach, from the left hand on WASD and the right hand on the mouse.
-2. Each shortcut tells what it costs (hand switch, stretch, keys at once, same key as another action) and suggests free keys nearby. Frequent actions far from the hand are flagged.
-3. Filters for out of reach, shared key, unused and stone keys. Stone keys are the browser and system shortcuts, shown with their default keys; you can edit them to match your browser.
+2. Each shortcut tells what it costs (hand switch, stretch, keys at once, same key as another action) and suggests free keys nearby.
+3. Filters for out of reach, shared key, unused and stone keys. Stone keys are the browser and system shortcuts, shown with their default keys; you can edit them to match your browser if you change them(just visuals).
 4. Movement and camera keys are highlighted, and keys used by several actions are outlined.
 5. Combo keys: tap twice or more, hold for a time, press keys together or in sequence. The key alone keeps working and only waits when its action fires once per press.
-6. Mouse buttons 3, 4 and 5 work as keys.
 7. As many profiles as you want: create, duplicate, rename, export, import or reset to Foundry's defaults.
-8. Browser shortcuts that take the tab out of the game are off: back and forward (side buttons, Alt+←/→, swipe), middle-button autoscroll, save, print, bookmarks, history, downloads, address bar and browser menu. Ctrl+W, Ctrl+T, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab; Chrome only lets the page catch Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab in fullscreen or with Foundry installed as an app. Closing the tab with Ctrl or Alt held asks for confirmation.
-9. Reload (F5), fullscreen (F11), console (F12), find, zoom and links stay with the browser. Each block is a client setting.
+8. Turn off unused browser keys while foundry is on your screen: back and forward (side buttons, Alt+←/→, swipe), middle-button autoscroll, save, print, bookmarks, history, downloads, address bar and browser menu. Ctrl+W, Ctrl+T, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab.
