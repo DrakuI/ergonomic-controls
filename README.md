@@ -1,0 +1,19 @@
+[![Downloads](https://img.shields.io/github/downloads/DrakuI/ergonomic-controls/total?label=downloads&style=for-the-badge)](https://github.com/DrakuI/ergonomic-controls/releases)
+[![Foundry Version](https://img.shields.io/badge/dynamic/json?label=Foundry&query=%24.compatibility.verified&url=https%3A%2F%2Fgithub.com%2FDrakuI%2Fergonomic-controls%2Freleases%2Flatest%2Fdownload%2Fmodule.json&color=orange&style=for-the-badge)](https://foundryvtt.com/packages/ergonomic-controls)
+[![Patreon](https://img.shields.io/badge/Patreon-F96854?logo=patreon&logoColor=white&style=for-the-badge)](https://patreon.com/noiterpg?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)
+
+# Ergonomic Controls
+
+Shortcuts that fit your hands, and a browser that stays out of the game.
+
+## Features
+
+1. Control Profiles, in the module settings: keyboard, mouse and controller maps with every shortcut colored by reach, from the left hand on WASD and the right hand on the mouse.
+2. Each shortcut tells what it costs (hand switch, stretch, keys at once, same key as another action) and suggests free keys nearby. Frequent actions far from the hand are flagged.
+3. Filters for out of reach, shared key, unused and stone keys. Stone keys are the browser and system shortcuts, shown with their default keys; you can edit them to match your browser.
+4. Movement and camera keys are highlighted, and keys used by several actions are outlined.
+5. Combo keys: tap twice or more, hold for a time, press keys together or in sequence. The key alone keeps working and only waits when its action fires once per press.
+6. Mouse buttons 3, 4 and 5 work as keys.
+7. As many profiles as you want: create, duplicate, rename, export, import or reset to Foundry's defaults.
+8. Browser shortcuts that take the tab out of the game are off: back and forward (side buttons, Alt+←/→, swipe), middle-button autoscroll, save, print, bookmarks, history, downloads, address bar and browser menu. Ctrl+W, Ctrl+T, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab; Chrome only lets the page catch Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab in fullscreen or with Foundry installed as an app. Closing the tab with Ctrl or Alt held asks for confirmation.
+9. Reload (F5), fullscreen (F11), console (F12), find, zoom and links stay with the browser. Each block is a client setting.

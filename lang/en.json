@@ -1,0 +1,194 @@
+{
+  "ERGONOMIC_CONTROLS": {
+    "Settings": {
+      "Historico": {
+        "Name": "Back and forward",
+        "Hint": "The mouse side buttons (4 and 5), Alt+← and Alt+→, the back and forward keys and the swipe gesture don't take the tab out of the game."
+      },
+      "BotaoMeio": {
+        "Name": "Middle button",
+        "Hint": "The middle button doesn't start autoscroll. Middle-clicking a link still opens it in another tab."
+      },
+      "Atalhos": {
+        "Name": "Browser shortcuts",
+        "Hint": "Save, print, open file, view source, bookmarks, history, downloads, help (F1), caret browsing (F7), address bar (Ctrl+L, F6) and browser menu (Alt, F10)."
+      },
+      "Abas": {
+        "Name": "Tabs and windows",
+        "Hint": "Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab. Chrome only passes Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab to the page in fullscreen (F11) or with Foundry installed as an app."
+      },
+      "Fechar": {
+        "Name": "Confirm on close",
+        "Hint": "Closing the tab or window with Ctrl or Alt held (Ctrl+W, Alt+F4) asks for confirmation."
+      }
+    },
+    "Menu": {
+      "Name": "Control Profiles",
+      "Label": "Open profiles",
+      "Hint": "Keyboard, mouse and controller shortcuts per profile, with the reach of each one."
+    },
+    "Keybindings": {
+      "Perfis": {
+        "Name": "Control profiles",
+        "Hint": "Opens and closes the control profiles."
+      }
+    },
+    "App": {
+      "Titulo": "Control Profiles"
+    },
+    "Perfis": {
+      "Perfil": "Profile",
+      "Novo": "New profile",
+      "Duplicar": "Duplicate profile",
+      "Renomear": "Rename profile",
+      "Apagar": "Delete profile",
+      "Exportar": "Export profile",
+      "Importar": "Import profile",
+      "Padrao": "Foundry defaults",
+      "ConfirmarApagar": "Delete the profile {nome}?",
+      "ConfirmarPadrao": "Reset every shortcut in this profile to Foundry's defaults?",
+      "Principal": "Main",
+      "SemNome": "Profile",
+      "ArquivoInvalido": "Invalid profile file.",
+      "Importado": "Profile {nome} imported."
+    },
+    "Filtros": {
+      "comAtalho": "Bound",
+      "todas": "All",
+      "longe": "Out of reach",
+      "colisoes": "Shared key",
+      "semUso": "Unused",
+      "pedras": "Stone keys"
+    },
+    "Lista": {
+      "Buscar": "Search action or key",
+      "Nada": "No actions.",
+      "LimparGrupo": "Remove the group's shortcuts",
+      "ConfirmarLimpar": "Remove the shortcuts of {n} actions in {grupo}?",
+      "Usada": "Used {n} times",
+      "Novo": "New shortcut",
+      "Nenhum": "none",
+      "Padrao": "Back to default: {atalhos}",
+      "Trocar": "Change",
+      "Tirar": "Remove"
+    },
+    "Niveis": {
+      "naMao": "At hand",
+      "perto": "Close",
+      "esticar": "Stretch",
+      "troca": "Hand switch",
+      "evitar": "Avoid"
+    },
+    "Visual": {
+      "teclado": "Keyboard and mouse",
+      "controle": "Controller",
+      "Esquerdo": "Left button (Foundry)",
+      "Direito": "Right button (Foundry)",
+      "SemControle": "No controller connected",
+      "Movimento": "Movement",
+      "Camera": "Camera",
+      "Sobreposta": "Overlap",
+      "Composta": "Combo"
+    },
+    "Captura": {
+      "Aperte": "Press",
+      "Protegida": "Foundry doesn't accept {tecla}."
+    },
+    "Avaliacao": {
+      "Livres": "Free nearby:"
+    },
+    "Resumo": {
+      "Atalhos": "{acoes} actions bound to {entradas} keys and buttons",
+      "Colisoes": "{n} sharing a key",
+      "SemUso": "{n} unused"
+    },
+    "Ergonomia": {
+      "esquerda0": "Left hand on WASD: reaches without moving the hand.",
+      "esquerda1": "The finger stretches; the hand stays on WASD.",
+      "esquerda2": "The left hand leaves WASD to reach.",
+      "direita": "Out of the left hand's reach: the right hand leaves the mouse (round trip ≈ {s} s).",
+      "funcao": "F row: the hand leaves its position (round trip ≈ {s} s).",
+      "navegacao": "Arrows and navigation keys: the right hand leaves the mouse (round trip ≈ {s} s).",
+      "numerico": "Numpad: the right hand leaves the mouse (round trip ≈ {s} s).",
+      "sistema": "Key taken by the system or the browser.",
+      "mouse": "Thumb on the side button: the hand stays on the mouse.",
+      "rodinha": "Wheel click: the hand stays, but the wheel can turn along.",
+      "gatilho": "Index finger on the trigger: thumbs stay on the sticks.",
+      "face": "The right thumb leaves the stick.",
+      "direcional": "The left thumb leaves the stick.",
+      "centro": "Center button: the thumb leaves the stick.",
+      "cliqueAnalogico": "Stick click: easy to press by accident while moving.",
+      "eixoMover": "Stick for a continuous action: the thumb stays put.",
+      "eixoToque": "Stick for a one-shot action: fires by accident.",
+      "botaoSistema": "System button: opens the controller or Steam menu.",
+      "desconhecida": "Key outside the standard keyboard.",
+      "protegida": "Foundry doesn't accept this key.",
+      "simultaneas": "{n} keys at once.",
+      "duasMaos": "Modifier and key in different hands: both leave their position.",
+      "esticaCombo": "Modifier with a stretched key: the left hand spreads too far.",
+      "segurarLonge": "Hold action: the key stays down while the other hand works.",
+      "navegadorReservada": "{dono} takes this key before the page: {funcao}.",
+      "dicaMeio": "Foundry locks tooltips with the middle button.",
+      "teclaWindows": "The Windows key opens the Start menu.",
+      "colisao": "Same shortcut as: {nomes}.",
+      "frequenteLonge": "Used {vezes} times: frequent action far from the hand.",
+      "semUso": "Unused since counting started.",
+      "caractere": "Stored as a character, not a key code: Foundry doesn't fire this shortcut.",
+      "navegadorUsa": "Also a {dono} shortcut: {funcao}.",
+      "sistemaUsa": "{dono} takes this key before the page: {funcao}.",
+      "toques": "{n} taps in a row, up to {s} s apart: costs time and fires by accident easily.",
+      "sequencia": "{n} keys in sequence, up to {s} s apart.",
+      "juntas": "{n} keys together: the second within {s} s of the first.",
+      "segurarTempo": "Hold {s} s on every use: good for rare actions or ones that must not fire by accident.",
+      "toquesMovimento": "Repeated taps on a movement key fire by accident while walking.",
+      "frequenteComposto": "Used {vezes} times: every use pays the combo's time.",
+      "esperaSozinhaTempo": "{tecla} alone ({nome}) now waits up to {s} s.",
+      "esperaSozinhaSoltura": "{tecla} alone ({nome}) now acts only on release.",
+      "esperaCompostoTempo": "Waits up to {s} s because of {gesto}.",
+      "esperaCompostoSoltura": "Acts only on release because of {gesto}."
+    },
+    "Teclas": {
+      "Espaco": "Space"
+    },
+    "Navegador": {
+      "Navegador": "Browser",
+      "Sistema": "System",
+      "Funcoes": {
+        "recarregar": "Reload",
+        "recarregarSemCache": "Hard reload",
+        "telaCheia": "Fullscreen",
+        "ferramentas": "Developer tools",
+        "console": "Console",
+        "inspecionar": "Inspect element",
+        "buscar": "Find in page",
+        "zoom": "Zoom",
+        "selecionarTudo": "Select all",
+        "copiar": "Copy",
+        "recortar": "Cut",
+        "colar": "Paste",
+        "desfazer": "Undo",
+        "refazer": "Redo",
+        "fecharAba": "Close tab",
+        "fecharJanela": "Close window",
+        "novaAba": "New tab",
+        "reabrirAba": "Reopen closed tab",
+        "novaJanela": "New window",
+        "trocarAba": "Switch tab",
+        "sair": "Quit browser",
+        "abrirLink": "Open link in another tab",
+        "trocarJanela": "Switch window",
+        "fecharPrograma": "Close the app",
+        "gerenciadorTarefas": "Task Manager",
+        "menuIniciar": "Start menu",
+        "spotlight": "Spotlight"
+      }
+    },
+    "Avisos": {
+      "Navegador": "Browser shortcuts are shown with their default keys. Changes made in your browser's settings aren't reflected here."
+    },
+    "Gestos": {
+      "Vezes": "{tecla} ×{n}",
+      "Segurado": "{tecla} held {s} s"
+    }
+  }
+}

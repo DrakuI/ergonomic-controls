@@ -1,0 +1,921 @@
+/* Voltar e avançar: sem o gesto de deslizar do touchpad para navegar e sem puxar a página para recarregar. */
+html.ergonomic-controls-historico,
+html.ergonomic-controls-historico body {
+  overscroll-behavior: none;
+}
+
+/* Aviso no topo da seção do módulo em Configurar Opções. */
+.ergonomic-controls-aviso {
+  display: flex;
+  gap: 0.5em;
+  align-items: baseline;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid var(--color-warm-2, #8e604c);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--color-text-secondary, #b0a496);
+  font-size: var(--font-size-13, 13px);
+  line-height: 1.35;
+}
+
+.ergonomic-controls-aviso i {
+  flex: none;
+  opacity: 0.85;
+}
+
+/* -------------------------------------------- */
+/*  Perfis de controle                          */
+/* -------------------------------------------- */
+
+/* Cores de alcance apagadas (do melhor ao pior). Roxo só no que é do mestre, como os segredos do Foundry. */
+.ergonomic-controls-janela .window-content.ec-conteudo {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ec-perfis {
+  --ec-n0: #6b8a55;
+  --ec-n1: #8c8f52;
+  --ec-n2: #a8843f;
+  --ec-n3: #a35e3f;
+  --ec-n4: #8a3f3f;
+  --ec-texto: var(--color-text-primary, #e0d6c8);
+  --ec-texto-2: var(--color-text-secondary, #b0a496);
+  --ec-acento: var(--color-warm-2, #8e604c);
+  --ec-borda: color-mix(in srgb, var(--ec-acento) 35%, transparent);
+  --ec-painel: color-mix(in srgb, var(--color-cool-4, #342b27) 45%, transparent);
+  --ec-tecla-fundo: rgba(12, 9, 8, 0.85);
+  --ec-roxo-texto: #a99bc9;
+  --ec-roxo-fundo: rgba(53, 0, 121, 0.25);
+  --ec-roxo-borda: #6f5c98;
+  --ec-externo: #7b8590;
+  --ec-mov: #4f7396;
+  --ec-cam: #4b7c82;
+  --ec-sobre: #d1a04e;
+  --ec-sobre-forte: #cf5f43;
+  --ec-cor: var(--ec-texto-2);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  height: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  color: var(--ec-texto);
+  font-size: 13px;
+  position: relative;
+}
+
+.ec-perfis .ec-sumidouro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  outline: none;
+}
+
+.ec-perfis .ec-n0, .ec-perfis .ec-z0 { --ec-cor: var(--ec-n0); --ec-zona: var(--ec-n0); }
+.ec-perfis .ec-n1, .ec-perfis .ec-z1 { --ec-cor: var(--ec-n1); --ec-zona: var(--ec-n1); }
+.ec-perfis .ec-n2, .ec-perfis .ec-z2 { --ec-cor: var(--ec-n2); --ec-zona: var(--ec-n2); }
+.ec-perfis .ec-n3, .ec-perfis .ec-z3 { --ec-cor: var(--ec-n3); --ec-zona: var(--ec-n3); }
+.ec-perfis .ec-n4, .ec-perfis .ec-z4 { --ec-cor: var(--ec-n4); --ec-zona: var(--ec-n4); }
+
+.ec-perfis button {
+  font-family: inherit;
+  color: var(--ec-texto);
+  min-width: 0;
+  margin: 0;
+  line-height: normal;
+  box-shadow: none;
+}
+
+/* Barra de perfis */
+.ec-perfis .ec-barra {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.ec-perfis .ec-rotulo-perfil {
+  color: var(--ec-texto-2);
+  margin-right: 2px;
+}
+
+.ec-perfis .ec-perfil {
+  flex: 0 1 260px;
+  height: 28px;
+}
+
+.ec-perfis .ec-icone {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ec-perfis .ec-icone:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ec-perfis .ec-espaco {
+  flex: 1;
+}
+
+/* Corpo */
+.ec-perfis .ec-corpo {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(340px, 41%) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.ec-perfis .ec-lista,
+.ec-perfis .ec-visual {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ec-painel);
+  border: 1px solid var(--ec-borda);
+  border-radius: 6px;
+}
+
+/* Lista */
+.ec-perfis .ec-ferramentas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-bottom: 1px solid var(--ec-borda);
+}
+
+.ec-perfis .ec-busca {
+  height: 28px;
+  width: 100%;
+}
+
+.ec-perfis .ec-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ec-perfis .ec-filtro {
+  flex: none;
+  width: auto;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 12px;
+  border: 1px solid var(--ec-borda);
+  background: transparent;
+  color: var(--ec-texto-2);
+  font-size: 12px;
+}
+
+.ec-perfis .ec-filtro.ec-ativo {
+  color: var(--ec-texto);
+  border-color: var(--ec-acento);
+  background: color-mix(in srgb, var(--ec-acento) 24%, transparent);
+}
+
+.ec-perfis .ec-filtro .ec-num {
+  margin-left: 6px;
+  opacity: 0.8;
+}
+
+.ec-perfis .ec-filtro-entrada i {
+  margin-left: 6px;
+}
+
+.ec-perfis .ec-grupos {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 6px 8px;
+}
+
+.ec-perfis .ec-grupo-topo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 2px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--ec-borda);
+}
+
+.ec-perfis .ec-grupo-topo h4 {
+  flex: 1;
+  margin: 0;
+  border: none;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--ec-texto);
+}
+
+.ec-perfis .ec-grupo-topo .ec-num {
+  font-size: 11px;
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-recolher {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.ec-perfis .ec-limpar {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.ec-perfis .ec-acoes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ec-perfis .ec-acao {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto minmax(0, max-content);
+  align-items: center;
+  column-gap: 6px;
+  min-height: 28px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ec-perfis .ec-acao:hover {
+  background: color-mix(in srgb, var(--ec-acento) 10%, transparent);
+}
+
+.ec-perfis .ec-acao.ec-selecionada {
+  background: color-mix(in srgb, var(--ec-acento) 20%, transparent);
+}
+
+.ec-perfis .ec-restrita .ec-nome,
+.ec-perfis .ec-av-nome.ec-restrita {
+  color: var(--ec-roxo-texto);
+}
+
+.ec-perfis .ec-restrita.ec-selecionada {
+  background: var(--ec-roxo-fundo);
+}
+
+.ec-perfis .ec-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ec-cor);
+}
+
+.ec-perfis .ec-ponto.ec-sem {
+  background: none;
+  border: 1px solid var(--ec-texto-2);
+  box-sizing: border-box;
+  opacity: 0.45;
+}
+
+.ec-perfis .ec-nome {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ec-perfis .ec-uso {
+  font-size: 11px;
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px;
+  max-width: 270px;
+}
+
+.ec-perfis .ec-atalho {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--ec-cor) 75%, transparent);
+  background: color-mix(in srgb, var(--ec-cor) 22%, transparent);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ec-perfis .ec-atalho .ec-rotulo {
+  flex: none;
+  width: auto;
+  height: 20px;
+  padding: 0 6px;
+  border: none;
+  background: none;
+  font-size: 12px;
+}
+
+.ec-perfis .ec-atalho .ec-mini {
+  display: none;
+  flex: none;
+  width: 18px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 10px;
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-atalho.ec-foco .ec-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ec-perfis .ec-atalho .ec-mini:hover {
+  color: var(--ec-texto);
+}
+
+.ec-perfis .ec-grupo-externo .ec-grupo-topo h4 {
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-atalho.ec-externo {
+  --ec-cor: var(--ec-externo);
+}
+
+.ec-perfis .ec-atalho.ec-fixo {
+  border-style: dashed;
+}
+
+.ec-perfis .ec-atalho.ec-colide {
+  box-shadow: inset 0 -2px 0 var(--ec-n4);
+}
+
+.ec-perfis .ec-atalho.ec-foco {
+  outline: 1px solid var(--ec-texto);
+}
+
+.ec-perfis .ec-capturando-chip {
+  --ec-cor: var(--ec-acento);
+  padding: 0 8px;
+  animation: ec-pulso 1.2s ease-in-out infinite;
+}
+
+@keyframes ec-pulso {
+  50% { opacity: 0.45; }
+}
+
+.ec-perfis .ec-mais,
+.ec-perfis .ec-resetar {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 10px;
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-vazio {
+  padding: 24px;
+  text-align: center;
+  color: var(--ec-texto-2);
+}
+
+/* Visualizador */
+.ec-perfis .ec-visual {
+  gap: 8px;
+  padding: 6px 8px 8px;
+}
+
+.ec-perfis .ec-abas {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.ec-perfis .ec-aba {
+  flex: none;
+  width: auto;
+  height: 26px;
+  padding: 0 12px;
+}
+
+.ec-perfis .ec-aba.ec-ativa {
+  border-color: var(--ec-acento);
+  background: color-mix(in srgb, var(--ec-acento) 24%, transparent);
+}
+
+.ec-perfis .ec-dispositivos {
+  flex: none;
+  container-type: inline-size;
+}
+
+.ec-perfis .ec-teclado-mouse {
+  --u: calc(100cqw / 27.2);
+  display: flex;
+  gap: calc(var(--u) * 0.5);
+}
+
+.ec-perfis .ec-teclado {
+  position: relative;
+  flex: none;
+  width: calc(var(--u) * 22.5);
+  height: calc(var(--u) * 6.25);
+}
+
+.ec-perfis .ec-tecla,
+.ec-perfis .ec-mbotao,
+.ec-perfis .ec-cbotao,
+.ec-perfis .ec-eixo {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--ec-cor) 32%, transparent);
+  background: color-mix(in srgb, var(--ec-cor) 14%, var(--ec-tecla-fundo));
+  color: var(--ec-texto-2);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ec-perfis .ec-tecla {
+  left: calc(var(--x) * var(--u));
+  top: calc(var(--y) * var(--u));
+  width: calc(var(--w) * var(--u) - 2px);
+  height: calc(var(--h) * var(--u) - 2px);
+  font-size: clamp(8px, calc(var(--u) * 0.36), 14px);
+  letter-spacing: -0.02em;
+}
+
+/* Contra estilos de botão de temas (padding, largura mínima, caixa alta). */
+.ec-perfis .ec-dispositivos :is(.ec-tecla, .ec-mbotao, .ec-cbotao, .ec-eixo) {
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.ec-perfis .ec-tecla.ec-medio {
+  font-size: clamp(7px, calc(var(--u) * 0.31), 12px);
+}
+
+.ec-perfis .ec-tecla.ec-longo {
+  font-size: clamp(7px, calc(var(--u) * 0.26), 11px);
+  letter-spacing: -0.03em;
+}
+
+.ec-perfis .ec-rot {
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ec-perfis .ec-ocupada {
+  border-color: color-mix(in srgb, var(--ec-cor) 85%, transparent);
+  background: color-mix(in srgb, var(--ec-cor) 34%, var(--ec-tecla-fundo));
+  color: var(--ec-texto);
+}
+
+.ec-perfis .ec-qtd {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 1px 2px;
+  border-radius: 2px;
+  background: var(--ec-sobre);
+  color: #17110c;
+  font-weight: 700;
+  font-size: max(7px, calc(var(--u) * 0.28));
+  line-height: 1;
+}
+
+/* Movimento do token (WASD) e da câmera (setas, numérico); a faixa de baixo guarda a cor do alcance. */
+.ec-perfis .ec-movimento {
+  --ec-cor: var(--ec-mov);
+  background: color-mix(in srgb, var(--ec-cor) 50%, var(--ec-tecla-fundo));
+  border-color: var(--ec-cor);
+  color: var(--ec-texto);
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--ec-zona, var(--ec-n0)) 90%, transparent);
+}
+
+.ec-perfis .ec-mov-camera {
+  --ec-cor: var(--ec-cam);
+}
+
+/* Várias funções na mesma tecla da camada: contorno e número; 3 ou mais, mais forte. */
+.ec-perfis .ec-sobreposta {
+  outline: 2px solid var(--ec-sobre);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.ec-perfis .ec-sobreposta-forte {
+  outline: 3px solid var(--ec-sobre-forte);
+  outline-offset: -3px;
+}
+
+.ec-perfis .ec-sobreposta-forte .ec-qtd {
+  background: var(--ec-sobre-forte);
+  color: #f4ece2;
+}
+
+/* Tecla usada num composto (duas vezes, segurar, juntas, em sequência): ponto no canto. */
+.ec-perfis .ec-composta::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ec-texto);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.ec-perfis .ec-sel {
+  outline: 2px solid var(--ec-texto);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.ec-perfis .ec-mod {
+  outline: 1px dashed var(--ec-texto);
+  outline-offset: -2px;
+}
+
+.ec-perfis .ec-foco {
+  z-index: 2;
+}
+
+.ec-perfis .ec-passando,
+.ec-perfis .ec-filtrada {
+  outline: 2px solid var(--ec-acento);
+  outline-offset: -2px;
+  z-index: 2;
+}
+
+.ec-perfis .ec-viva {
+  background: color-mix(in srgb, var(--ec-texto) 45%, var(--ec-tecla-fundo));
+  color: var(--color-dark-1, #111);
+}
+
+.ec-perfis .ec-protegida {
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0, 0, 0, 0.35) 4px 6px);
+  opacity: 0.65;
+}
+
+/* Ocupadas pelo navegador ou pelo sistema (o que o módulo não bloqueia), na camada de modificadores mostrada. */
+.ec-perfis .ec-so-externa {
+  --ec-cor: var(--ec-externo);
+  border-style: dashed;
+}
+
+.ec-perfis .ec-marca {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  font-size: max(6px, calc(var(--u) * 0.24));
+  line-height: 1;
+  color: var(--ec-texto);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.ec-perfis .ec-externa:not(.ec-so-externa) .ec-marca {
+  color: var(--ec-externo);
+  opacity: 1;
+}
+
+/* Modificadores da camada mostrada. */
+.ec-perfis .ec-camada {
+  background: color-mix(in srgb, var(--ec-acento) 40%, var(--ec-tecla-fundo));
+  border-color: var(--ec-acento);
+  color: var(--ec-texto);
+}
+
+.ec-perfis .ec-capturando .ec-tecla,
+.ec-perfis .ec-capturando .ec-mbotao:not(.ec-foundry),
+.ec-perfis .ec-capturando .ec-cbotao,
+.ec-perfis .ec-capturando .ec-eixo {
+  cursor: crosshair;
+}
+
+/* Mouse */
+.ec-perfis .ec-mouse {
+  position: relative;
+  flex: none;
+  width: calc(var(--u) * 4.2);
+  height: calc(var(--u) * 6.25);
+}
+
+.ec-perfis .ec-mouse-corpo {
+  position: absolute;
+  inset: 0 0 0 calc(var(--u) * 0.6);
+  border: 1px solid var(--ec-borda);
+  border-radius: calc(var(--u) * 1.7) calc(var(--u) * 1.7) calc(var(--u) * 1.5) calc(var(--u) * 1.5);
+  background: rgba(12, 9, 8, 0.55);
+}
+
+.ec-perfis .ec-mbotao {
+  font-size: calc(var(--u) * 0.34);
+}
+
+.ec-perfis .ec-mesq,
+.ec-perfis .ec-mdir {
+  top: 0;
+  width: 50%;
+  height: 40%;
+  cursor: help;
+}
+
+.ec-perfis .ec-mesq {
+  left: 0;
+  border-radius: calc(var(--u) * 1.7) 0 0 0;
+}
+
+.ec-perfis .ec-mdir {
+  right: 0;
+  border-radius: 0 calc(var(--u) * 1.7) 0 0;
+}
+
+.ec-perfis .ec-foundry {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--ec-borda);
+}
+
+.ec-perfis .ec-mouse3 {
+  left: calc(50% - var(--u) * 0.3);
+  top: 9%;
+  width: calc(var(--u) * 0.6);
+  height: 22%;
+  border-radius: calc(var(--u) * 0.3);
+  z-index: 1;
+}
+
+.ec-perfis .ec-mouse5,
+.ec-perfis .ec-mouse4 {
+  left: calc(var(--u) * -0.6);
+  width: calc(var(--u) * 0.6);
+  height: calc(var(--u) * 0.95);
+}
+
+.ec-perfis .ec-mouse5 {
+  top: 45%;
+}
+
+.ec-perfis .ec-mouse4 {
+  top: 62%;
+}
+
+/* Controle */
+.ec-perfis .ec-controle {
+  --uc: calc(100cqw / 20);
+  position: relative;
+  width: 100%;
+  height: calc(var(--uc) * 9.3);
+}
+
+.ec-perfis .ec-controle.ec-desligado .ec-controle-corpo {
+  opacity: 0.45;
+}
+
+.ec-perfis .ec-controle-corpo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--uc) * 20);
+  height: calc(var(--uc) * 8.6);
+}
+
+.ec-perfis .ec-controle-corpo::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--uc) * 0.8);
+  top: calc(var(--uc) * 1.7);
+  width: calc(var(--uc) * 18.4);
+  height: calc(var(--uc) * 6.9);
+  border: 1px solid var(--ec-borda);
+  border-radius: calc(var(--uc) * 2) calc(var(--uc) * 2) calc(var(--uc) * 3.4) calc(var(--uc) * 3.4);
+  background: rgba(12, 9, 8, 0.55);
+}
+
+.ec-perfis .ec-cbotao {
+  left: calc(var(--x) * var(--uc));
+  top: calc(var(--y) * var(--uc));
+  width: calc(var(--w) * var(--uc));
+  height: calc(var(--h) * var(--uc));
+  font-size: calc(var(--uc) * 0.36);
+}
+
+.ec-perfis .ec-redondo,
+.ec-perfis .ec-clique {
+  border-radius: 50%;
+}
+
+.ec-perfis .ec-gatilho {
+  border-radius: calc(var(--uc) * 0.4) calc(var(--uc) * 0.4) 3px 3px;
+}
+
+.ec-perfis .ec-analogico {
+  position: absolute;
+  left: calc(var(--x) * var(--uc));
+  top: calc(var(--y) * var(--uc));
+  width: calc(var(--uc) * 3);
+  height: calc(var(--uc) * 3);
+  border-radius: 50%;
+  border: 1px solid var(--ec-borda);
+}
+
+.ec-perfis .ec-analogico .ec-clique {
+  left: calc(var(--uc) * 0.9);
+  top: calc(var(--uc) * 0.9);
+  width: calc(var(--uc) * 1.2);
+  height: calc(var(--uc) * 1.2);
+}
+
+.ec-perfis .ec-eixo {
+  width: calc(var(--uc) * 0.75);
+  height: calc(var(--uc) * 0.75);
+  font-size: calc(var(--uc) * 0.36);
+}
+
+.ec-perfis .ec-eixo-cima { left: calc(var(--uc) * 1.125); top: calc(var(--uc) * 0.05); }
+.ec-perfis .ec-eixo-baixo { left: calc(var(--uc) * 1.125); top: calc(var(--uc) * 2.2); }
+.ec-perfis .ec-eixo-esq { left: calc(var(--uc) * 0.05); top: calc(var(--uc) * 1.125); }
+.ec-perfis .ec-eixo-dir { left: calc(var(--uc) * 2.2); top: calc(var(--uc) * 1.125); }
+
+.ec-perfis .ec-controle-nome {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-size: 11px;
+  color: var(--ec-texto-2);
+}
+
+/* Legenda */
+.ec-perfis .ec-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  flex: none;
+  font-size: 11px;
+  color: var(--ec-texto-2);
+}
+
+.ec-perfis .ec-amostra {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ec-cor) 60%, var(--ec-tecla-fundo));
+  border: 1px solid color-mix(in srgb, var(--ec-cor) 85%, transparent);
+}
+
+.ec-perfis .ec-legenda-separador {
+  width: 1px;
+  align-self: stretch;
+  background: var(--ec-borda);
+}
+
+.ec-perfis .ec-legenda-mov { --ec-cor: var(--ec-mov); }
+.ec-perfis .ec-legenda-camera { --ec-cor: var(--ec-cam); }
+.ec-perfis .ec-legenda-pedra { --ec-cor: var(--ec-externo); }
+.ec-perfis .ec-legenda-pedra .ec-amostra { border-style: dashed; }
+
+.ec-perfis .ec-legenda-composta .ec-amostra {
+  position: relative;
+  background: var(--ec-tecla-fundo);
+  border-color: var(--ec-borda);
+}
+
+.ec-perfis .ec-legenda-composta .ec-amostra::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ec-texto);
+}
+
+.ec-perfis .ec-legenda-sobre .ec-amostra {
+  background: var(--ec-tecla-fundo);
+  border: 2px solid var(--ec-sobre);
+}
+
+/* Avaliação */
+.ec-perfis .ec-avaliacao {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--ec-borda);
+}
+
+.ec-perfis .ec-av-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ec-perfis .ec-av-nome {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.ec-perfis .ec-av-atalho {
+  padding: 0 8px;
+}
+
+.ec-perfis .ec-av-nivel {
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ec-cor) 45%, transparent);
+  font-size: 12px;
+}
+
+.ec-perfis .ec-motivos {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+.ec-perfis .ec-motivo {
+  margin: 3px 0;
+}
+
+.ec-perfis .ec-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.ec-perfis .ec-sugestoes-rotulo {
+  color: var(--ec-texto-2);
+  margin-right: 2px;
+}
+
+.ec-perfis .ec-sugestao {
+  flex: none;
+  width: auto;
+  padding: 0 9px;
+  cursor: pointer;
+}
+
+.ec-perfis .ec-resumo-barra {
+  display: flex;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid var(--ec-borda);
+}
+
+.ec-perfis .ec-resumo-seg {
+  min-width: 18px;
+  background: color-mix(in srgb, var(--ec-cor) 65%, transparent);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--ec-texto);
+}
+
+.ec-perfis .ec-resumo-numeros {
+  margin: 6px 0 0;
+  color: var(--ec-texto-2);
+}
+
+/* Linhas do navegador e do sistema na dica de uma tecla (a dica fica fora da janela). */
+.ec-dica-externa {
+  opacity: 0.75;
+}
