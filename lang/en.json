@@ -15,7 +15,7 @@
       },
       "Abas": {
         "Name": "Tabs and windows",
-        "Hint": "Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab. Chrome only passes Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab to the page in fullscreen (F11) or with Foundry <a href=\"https://support.google.com/chrome/answer/9658361\" target=\"_blank\" rel=\"noopener\">installed as an app</a>."
+        "Hint": "Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab. Chrome only passes Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab to the page in fullscreen (F11) or with Foundry <a href=\"https://discord.gg/RNTmfrcmUC\" target=\"_blank\" rel=\"noopener\">installed as an app</a>."
       },
       "Fechar": {
         "Name": "Confirm on close",
