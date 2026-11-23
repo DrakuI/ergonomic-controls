@@ -551,6 +551,32 @@ export class InterfacePerfis {
     return li;
   }
 
+  /**
+   * Rótulo de um atalho na lista e na avaliação, com balão: toques seguidos numa tecla ("Q" com ×2), segurar uma tecla
+   * por um tempo ("H" com ↓ 1 s) e ação que age enquanto a tecla fica apertada (↓; menos movimento e câmera, que são
+   * contínuos). Outros compostos (juntas, sequência) ficam no texto.
+   */
+  #conteudoAtalho(binding, acao) {
+    const gesto = lerGesto(binding.key);
+    const modifiers = binding.modifiers ?? [];
+    let balao = null;
+    let texto = this.fonte.rotulo(binding);
+    if (gesto) {
+      const p = gesto.pressoes;
+      const uma = p.every((x) => (x.teclas.length === 1) && (x.teclas[0] === p[0].teclas[0]));
+      if (uma && (p.length >= 2) && p.every((x) => !x.segurar)) {
+        texto = this.fonte.rotulo({ key: p[0].teclas[0], modifiers });
+        balao = `×${p.length}`;
+      }
+      else if ((p.length === 1) && (p[0].teclas.length === 1) && p[0].segurar) {
+        texto = this.fonte.rotulo({ key: p[0].teclas[0], modifiers });
+        balao = `↓ ${this.#numero(p[0].segurar / 1000)} s`;
+      }
+    }
+    else if (acao?.segurar && !acao.movimento) balao = "↓";
+    return { texto, balao: balao ? no("span", "ec-balao", [balao]) : null };
+  }
+
   #chip(acao, atalho) {
     const nivel = atalho.avaliacao.nivel;
     const chave = chaveAtalho(atalho.binding);
@@ -564,9 +590,14 @@ export class InterfacePerfis {
     if (atalho.colisoes?.size || atalho.conflitoExterno) chip.classList.add("ec-colide");
     const foco = this.estado.foco;
     if (foco && (foco.acaoId === acao.id) && (foco.chave === chave)) chip.classList.add("ec-foco");
-    const rotulo = botao("ec-rotulo", [this.fonte.rotulo(atalho.binding)], { acaoId: acao.id, chave });
+    const { texto, balao } = this.#conteudoAtalho(atalho.binding, acao);
+    const rotulo = botao("ec-rotulo", [texto], { acaoId: acao.id, chave });
     rotulo.dataset.tooltipText = pedra ? this.t("Visual.Pedra") : this.#dicaNivel(nivel);
     chip.append(rotulo);
+    if (balao) {
+      chip.classList.add("ec-com-balao");
+      chip.append(balao);
+    }
     if (!atalho.fixo) {
       chip.append(
         botao("ec-mini", [icone("fa-solid fa-pen")], { chipAcao: "trocar", acaoId: acao.id, indice: atalho.indice },
@@ -650,27 +681,8 @@ export class InterfacePerfis {
       const id = externos[0].ocupacao.grupo ? null : externos[0].ocupacao.id;
       el.append(no("span", "ec-marca", [icone(`fa-solid ${ICONE_DA_FUNCAO[id] ?? "fa-globe"}`)]));
     }
-    // Balões: toques seguidos (×2) e segurar (↓), de tecla composta ou de ação que age enquanto a tecla fica apertada
-    // (menos movimento e câmera, que são contínuos). Outros compostos (juntas, sequência): ponto no canto.
-    let vezes = 0;
-    let segurar = false;
-    let composta = false;
-    for (const a of usados) {
-      if (a.gesto) {
-        const p = a.gesto.pressoes;
-        if ((p.length >= 2) && p.every((x) => (x.teclas.length === 1) && (x.teclas[0] === code) && !x.segurar)) {
-          vezes = Math.max(vezes, p.length);
-        }
-        else if (p.some((x) => x.segurar && x.teclas.includes(code))) segurar = true;
-        else composta = true;
-      }
-      else if (a.acao.segurar && !a.acao.movimento) segurar = true;
-    }
-    const baloes = [];
-    if (vezes) baloes.push(no("span", "ec-balao", [`×${vezes}`]));
-    if (segurar) baloes.push(no("span", "ec-balao ec-balao-segurar", ["↓"]));
-    if (baloes.length) el.append(no("span", "ec-baloes", baloes));
-    if (composta) el.classList.add("ec-composta");
+    // Tecla usada num composto: ponto no canto.
+    if (usados.some((a) => a.gesto)) el.classList.add("ec-composta");
     // Funções diferentes no mesmo aperto desta camada (Foundry, navegador e sistema).
     const funcoes = new Set(usados.map((a) => a.acao.id)).size
       + new Set(externos.map((x) => x.ocupacao.chave ?? x.ocupacao.id)).size;
@@ -815,7 +827,8 @@ export class InterfacePerfis {
     const av = atalho.avaliacao;
     const pedra = av.pedra || Boolean(acao.externa);
     const nome = no("span", `ec-av-nome${acao.restrita ? " ec-restrita" : ""}`, [acao.nome]);
-    const chip = no("span", `ec-atalho ${pedra ? "ec-pedra" : `ec-n${av.nivel}`} ec-av-atalho`, [this.fonte.rotulo(atalho.binding)]);
+    const { texto, balao } = this.#conteudoAtalho(atalho.binding, acao);
+    const chip = no("span", `ec-atalho ${pedra ? "ec-pedra" : `ec-n${av.nivel}`} ec-av-atalho${balao ? " ec-com-balao" : ""}`, [texto, balao]);
     chip.dataset.tooltipText = pedra ? this.t("Visual.Pedra") : this.#dicaNivel(av.nivel);
     const topo = no("div", "ec-av-topo", [nome, chip,
       pedra ? no("span", "ec-av-nivel ec-pedra", [this.t("Visual.Pedra")]) : null]);

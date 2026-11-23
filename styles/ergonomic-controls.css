@@ -329,6 +329,33 @@ html.ergonomic-controls-historico body {
   font-size: 12px;
 }
 
+/* Balão no canto do atalho: toques seguidos (×2) e segurar (↓). */
+.ec-perfis .ec-atalho {
+  position: relative;
+}
+
+.ec-perfis .ec-atalho .ec-balao {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  z-index: 1;
+  padding: 1px 3px;
+  border-radius: 6px 6px 6px 0;
+  background: var(--ec-texto);
+  color: #17110c;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+.ec-perfis .ec-com-balao .ec-rotulo,
+.ec-perfis .ec-av-atalho.ec-com-balao {
+  padding-right: 9px;
+}
+
 .ec-perfis .ec-atalho .ec-mini {
   display: none;
   flex: none;
@@ -535,38 +562,7 @@ html.ergonomic-controls-historico body {
   color: #f4ece2;
 }
 
-/* Balões: toques seguidos (×2) e segurar (↓), saindo do canto de cima da tecla. */
-.ec-perfis .ec-dispositivos :is(.ec-tecla, .ec-mbotao, .ec-cbotao, .ec-eixo):has(.ec-baloes) {
-  overflow: visible;
-  z-index: 3;
-}
-
-.ec-perfis .ec-baloes {
-  position: absolute;
-  top: calc(var(--u) * -0.2);
-  right: calc(var(--u) * -0.12);
-  display: flex;
-  gap: 1px;
-  pointer-events: none;
-}
-
-.ec-perfis .ec-balao {
-  padding: 1px 2px;
-  border-radius: 3px 3px 3px 0;
-  background: var(--ec-texto);
-  color: #17110c;
-  font-weight: 700;
-  font-size: max(7px, calc(var(--u) * 0.24));
-  line-height: 1;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
-}
-
-.ec-perfis .ec-cbotao .ec-balao,
-.ec-perfis .ec-eixo .ec-balao {
-  font-size: max(7px, calc(var(--uc) * 0.26));
-}
-
-/* Outros compostos (juntas, em sequência): ponto no canto. */
+/* Tecla usada num composto (duas vezes, segurar, juntas, em sequência): ponto no canto. */
 .ec-perfis .ec-composta::after {
   content: "";
   position: absolute;
