@@ -312,6 +312,7 @@ export class InterfacePerfis {
     for (const acao of acoes) {
       acao.vezes = uso.contagem[acao.id] ?? 0;
       let melhor = null;
+      let pedras = 0;
       for (const atalho of acao.atalhos) {
         atalho.externos = externosDe(atalho.binding, acao.reservados);
         atalho.conflitoExterno = atalho.externos.some(pesado);
@@ -327,14 +328,19 @@ export class InterfacePerfis {
           movimento: Boolean(atalho.movimento),
           esperas: esperas.get(atalho)
         });
-        melhor = (melhor === null) ? atalho.avaliacao.nivel : Math.min(melhor, atalho.avaliacao.nivel);
+        // Stone key é só aviso: não entra no alcance da ação, nas contagens nem no veredito.
+        if (atalho.avaliacao.pedra) pedras++;
+        else melhor = (melhor === null) ? atalho.avaliacao.nivel : Math.min(melhor, atalho.avaliacao.nivel);
       }
+      if (pedras && (pedras === acao.atalhos.length)) acao.pedra = true;
       acao.melhor = melhor;
       acao.colide = acao.atalhos.some((a) => a.colisoes?.size || a.conflitoExterno);
       if (!acao.atalhos.length) continue;
       contagem.comAtalho++;
-      niveis[melhor]++;
-      if (melhor >= NIVEL.TROCA) contagem.longe++;
+      if (melhor !== null) {
+        niveis[melhor]++;
+        if (melhor >= NIVEL.TROCA) contagem.longe++;
+      }
       if (acao.colide) contagem.colisoes++;
       if (acao.pedra) contagem.pedras++;
     }
@@ -499,6 +505,10 @@ export class InterfacePerfis {
     }
     const ordenados = [...grupos.values()].sort((a, b) => (a.ordem - b.ordem) || a.titulo.localeCompare(b.titulo));
     const frag = document.createDocumentFragment();
+    if ((this.estado.filtro === "pedras") && !this.estado.entrada) {
+      frag.append(no("p", "ergonomic-controls-aviso ec-aviso-pedras", [icone("fa-solid fa-circle-info"), " ",
+        this.t("Avisos.Navegador")]));
+    }
     for (const grupo of ordenados) frag.append(this.#grupo(grupo));
     if (!ordenados.length) frag.append(no("p", "ec-vazio", [this.t("Lista.Nada")]));
     this.grupos.replaceChildren(frag);
@@ -553,8 +563,8 @@ export class InterfacePerfis {
 
   /**
    * Rótulo de um atalho na lista e na avaliação, com balão: toques seguidos numa tecla ("Q" com ×2), segurar uma tecla
-   * por um tempo ("H" com ↓ 1 s) e ação que age enquanto a tecla fica apertada (↓; menos movimento e câmera, que são
-   * contínuos). Outros compostos (juntas, sequência) ficam no texto.
+   * por um tempo ("H" com ↓; o tempo fica na avaliação) e ação que age enquanto a tecla fica apertada (↓; menos
+   * movimento e câmera, que são contínuos). Outros compostos (juntas, sequência) ficam no texto.
    */
   #conteudoAtalho(binding, acao) {
     const gesto = lerGesto(binding.key);
@@ -570,7 +580,7 @@ export class InterfacePerfis {
       }
       else if ((p.length === 1) && (p[0].teclas.length === 1) && p[0].segurar) {
         texto = this.fonte.rotulo({ key: p[0].teclas[0], modifiers });
-        balao = `↓ ${this.#numero(p[0].segurar / 1000)} s`;
+        balao = "↓";
       }
     }
     else if (acao?.segurar && !acao.movimento) balao = "↓";
@@ -877,9 +887,9 @@ export class InterfacePerfis {
       this.t("Resumo.Atalhos", { acoes: this.#numero(d.contagem.comAtalho), entradas: this.#numero(entradas) })
     ]);
     if (d.contagem.colisoes) numeros.append(" · ", this.t("Resumo.Colisoes", { n: this.#numero(d.contagem.colisoes) }));
-    // Veredito: quantas ações com atalho fazem trocar de mão (ou tirar a mão do mouse).
+    // Veredito: quantas ações com atalho fazem trocar de mão (ou tirar a mão do mouse), fora as só em stone keys.
     const longe = d.niveis[NIVEL.TROCA] + d.niveis[NIVEL.EVITAR];
-    const total = d.contagem.comAtalho;
+    const total = d.niveis.reduce((s, n) => s + n, 0);
     let veredito = null;
     if (total) {
       if (!longe) veredito = this.t("Resumo.Perto");

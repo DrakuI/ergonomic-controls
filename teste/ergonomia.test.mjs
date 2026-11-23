@@ -38,11 +38,16 @@ r = av("["); conferir("colchete como caractere", r.nivel === 4 && ids(r)[0] === 
 r = av("F13"); conferir("F13 desconhecida", r.nivel === 3 && ids(r)[0] === "desconhecida");
 r = av("KeyW", [], { pedra: "movimento" }); conferir("tecla de movimento: stone key sem texto do sistema", r.pedra && !ids(r).includes("sistema"));
 r = av("F5", [], { pedra: "externa" }); conferir("linha do navegador: stone key com o texto do sistema", r.pedra && ids(r).includes("sistema"));
+r = av("KeyI", ["Control", "Shift"], { pedra: "externa" }); conferir("stone key com modificadores: só o texto do sistema", r.pedra && (ids(r).join() === "sistema"), JSON.stringify(r.motivos));
+r = av("F5", ["Shift"], { pedra: "externa" }); conferir("Shift+F5 do navegador: sem duas mãos", ids(r).join() === "sistema", JSON.stringify(r.motivos));
+r = av("MetaLeft", ["Control"]); conferir("Ctrl+Win: stone key sem custo de modificador", r.pedra && (ids(r).join() === "sistema"), JSON.stringify(r.motivos));
+r = av("MetaLeft", [], { ocupacoes: [{ nome: "Menu Iniciar", dono: "sistema" }] });
+conferir("Win com ocupação: só o aviso de quem pega antes", r.pedra && (ids(r).join() === "pedraAntes"), JSON.stringify(r.motivos));
 // Mouse
 r = av("Mouse4"); conferir("Mouse4 na mão", r.nivel === 0 && r.info.dispositivo === "mouse" && !r.motivos.length);
 r = av("Mouse3"); conferir("Mouse3 perto + dica", r.nivel === 1 && ids(r).includes("dicaMeio"));
 r = av("Mouse5", ["Control"]); conferir("Ctrl+Mouse5 sem duas mãos", r.nivel === 0 && !ids(r).includes("duasMaos"));
-// Controle: nada longe, a não ser o clique do analógico e os compostos com botões juntos.
+// Controle: tudo na mão; só os compostos com botões juntos pesam. Clique do analógico e eixo de um toque: aviso.
 const ID = "XBOXWIRELESSCONTROLLER(STANDARDGAMEPADVENDOR:045EPRODUCT:0B13)";
 conferir("ler botão", JSON.stringify(E.lerControle(`${ID}_BUTTON0_PRESSED`)) === JSON.stringify({ tipo: "botao", id: ID, indice: 0 }));
 conferir("ler eixo", E.lerControle(`${ID}_AXIS2_NEGATIVE`)?.sentido === "NEGATIVE");
@@ -51,10 +56,10 @@ r = av(`${ID}_BUTTON0_PRESSED`); conferir("A na mão", r.nivel === 0 && !r.motiv
 r = av(`${ID}_BUTTON4_PRESSED`); conferir("LB na mão", r.nivel === 0 && !r.motivos.length);
 r = av(`${ID}_BUTTON12_PRESSED`); conferir("d-pad na mão", r.nivel === 0 && !r.motivos.length);
 r = av(`${ID}_BUTTON8_PRESSED`); conferir("View na mão", r.nivel === 0);
-r = av(`${ID}_BUTTON10_PRESSED`); conferir("L3 dispara sem querer", r.nivel === 1 && ids(r).includes("acidente"));
-r = av(`${ID}_BUTTON16_PRESSED`); conferir("Home é stone key", r.pedra && ids(r).includes("sistema"));
+r = av(`${ID}_BUTTON10_PRESSED`); conferir("L3 na mão, com aviso de disparo sem querer", r.nivel === 0 && ids(r).includes("acidente"));
+r = av(`${ID}_BUTTON16_PRESSED`); conferir("Home é stone key", r.pedra && ids(r).includes("sistema") && r.nivel === 0);
 r = av(`${ID}_AXIS1_NEGATIVE`, [], { acao: { repeticao: true } }); conferir("eixo mover", r.nivel === 0 && !r.motivos.length);
-r = av(`${ID}_AXIS1_NEGATIVE`); conferir("eixo toque dispara sem querer", r.nivel === 1 && ids(r).includes("acidente"));
+r = av(`${ID}_AXIS1_NEGATIVE`); conferir("eixo de um toque na mão, com aviso", r.nivel === 0 && ids(r).includes("acidente"));
 r = av(`Gesto:${ID}_BUTTON0_PRESSED+${ID}_BUTTON1_PRESSED`); conferir("A + B juntos: esticar", r.nivel === 2 && ids(r).includes("juntas"), JSON.stringify(r.motivos));
 conferir("rótulo Xbox", E.rotuloControle(E.lerControle(`${ID}_BUTTON4_PRESSED`)) === "LB");
 conferir("rótulo PS", E.rotuloControle(E.lerControle("DUALSENSEWIRELESSCONTROLLER(STANDARDGAMEPADVENDOR:054CPRODUCT:0CE6)_BUTTON0_PRESSED")) === "✕");

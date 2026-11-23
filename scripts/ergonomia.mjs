@@ -264,15 +264,16 @@ export const MOUSE = Object.freeze([
 /**
  * Botões do mapeamento padrão da Gamepad API, com nível e região. O Foundry converte cada botão em tecla
  * `<ID>_BUTTON<n>_PRESSED` e cada sentido de eixo em `<ID>_AXIS<n>_POSITIVE|NEGATIVE`. Nenhum botão tira o dedo do
- * lugar; o clique do analógico dispara sem querer e o botão Home é do sistema (stone key).
+ * lugar: todos ficam na mão, e no controle só o aperto de botões juntos pesa. O clique do analógico leva o aviso de
+ * disparo sem querer; o botão Home é do sistema (stone key).
  */
 const CONTROLE_BOTOES = [
   [0, "face"], [0, "face"], [0, "face"], [0, "face"],
   [0, "gatilho"], [0, "gatilho"], [0, "gatilho"], [0, "gatilho"],
   [0, "centro"], [0, "centro"],
-  [1, "acidente"], [1, "acidente"],
+  [0, "acidente"], [0, "acidente"],
   [0, "direcional"], [0, "direcional"], [0, "direcional"], [0, "direcional"],
-  [4, "sistema"]
+  [0, "sistema"]
 ];
 
 const ROTULOS_CONTROLE = {
@@ -346,8 +347,7 @@ export function infoEntrada(code, acao = {}, maos = MAOS_PADRAO) {
   const controle = lerControle(code);
   if (controle) {
     if (controle.tipo === "eixo") {
-      return acao.repeticao ? { dispositivo: "controle", controle, nivel: NIVEL.NA_MAO, regiao: "eixo" }
-        : { dispositivo: "controle", controle, nivel: NIVEL.PERTO, regiao: "acidente" };
+      return { dispositivo: "controle", controle, nivel: NIVEL.NA_MAO, regiao: acao.repeticao ? "eixo" : "acidente" };
     }
     const [nivel, regiao] = CONTROLE_BOTOES[controle.indice] ?? [NIVEL.NA_MAO, "centro"];
     return { dispositivo: "controle", controle, nivel, regiao, pedra: regiao === "sistema" };
@@ -403,12 +403,15 @@ export function avaliar(binding, opcoes = {}) {
 
   if (invalida) motivos.push({ id: "caractere" });
   else if (info.regiao === "desconhecida") motivos.push({ id: "desconhecida" });
-  if ((opcoes.pedra === "externa") || (info.regiao === "sistema") || protegida) motivos.push({ id: "sistema" });
+  // Stone key do sistema ou do navegador: um aviso só. No atalho do Foundry, a ocupação já diz qual função pega antes.
+  if (((opcoes.pedra === "externa") || (info.regiao === "sistema") || protegida) && !ocupacoes.length) {
+    motivos.push({ id: "sistema" });
+  }
   if (info.regiao === "acidente") motivos.push({ id: "acidente" });
 
   // Teclas ao mesmo tempo (KLM: cada modificador é um toque; diretrizes: evitar simultâneas). O modificador vale pela
-  // tecla mais perto da mão (Ctrl da esquerda ou da direita).
-  const n = modificadores.length;
+  // tecla mais perto da mão (Ctrl da esquerda ou da direita). Stone key não tem alcance: fica só o aviso dela.
+  const n = pedra ? 0 : modificadores.length;
   if (n >= 2) {
     motivos.push({ id: "simultaneas", dados: { n: n + 1 } });
     nivel = Math.max(nivel, NIVEL.ESTICAR);
