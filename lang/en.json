@@ -7,7 +7,7 @@
       },
       "BotaoMeio": {
         "Name": "Middle button",
-        "Hint": "The middle button doesn't start autoscroll. Middle-clicking a link still opens it in another tab."
+        "Hint": "The middle button doesn't start autoscroll."
       },
       "Atalhos": {
         "Name": "Browser shortcuts",
@@ -15,7 +15,7 @@
       },
       "Abas": {
         "Name": "Tabs and windows",
-        "Hint": "Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab. Chrome only passes Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab to the page in fullscreen (F11) or with Foundry installed as an app."
+        "Hint": "Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Tab, Ctrl+1–9 and the like don't close, open or switch the tab. Chrome only passes Ctrl+W, Ctrl+T, Ctrl+N and Ctrl+Tab to the page in fullscreen (F11) or with Foundry <a href=\"https://support.google.com/chrome/answer/9658361\" target=\"_blank\" rel=\"noopener\">installed as an app</a>."
       },
       "Fechar": {
         "Name": "Confirm on close",
@@ -25,7 +25,7 @@
     "Menu": {
       "Name": "Control Profiles",
       "Label": "Open profiles",
-      "Hint": "Keyboard, mouse and controller shortcuts per profile, with the reach of each one."
+      "Hint": "Keyboard, mouse and controller shortcuts per profile."
     },
     "Keybindings": {
       "Perfis": {
@@ -44,7 +44,7 @@
       "Apagar": "Delete profile",
       "Exportar": "Export profile",
       "Importar": "Import profile",
-      "Padrao": "Foundry defaults",
+      "Padrao": "Reset Profile",
       "ConfirmarApagar": "Delete the profile {nome}?",
       "ConfirmarPadrao": "Reset every shortcut in this profile to Foundry's defaults?",
       "Principal": "Main",
@@ -57,15 +57,15 @@
       "todas": "All",
       "longe": "Out of reach",
       "colisoes": "Shared key",
-      "semUso": "Unused",
       "pedras": "Stone keys"
     },
     "Lista": {
-      "Buscar": "Search action or key",
+      "Buscar": "Search action",
       "Nada": "No actions.",
       "LimparGrupo": "Remove the group's shortcuts",
       "ConfirmarLimpar": "Remove the shortcuts of {n} actions in {grupo}?",
       "Usada": "Used {n} times",
+      "UsadaUma": "Used once",
       "Novo": "New shortcut",
       "Nenhum": "none",
       "Padrao": "Back to default: {atalhos}",
@@ -79,16 +79,22 @@
       "troca": "Hand switch",
       "evitar": "Avoid"
     },
+    "Dicas": {
+      "naMao": "At hand: no need to move your hand.",
+      "perto": "Close: a little far from your hand.",
+      "esticar": "Stretch: you'll have to move your hand to press it.",
+      "troca": "Hand switch: you'll switch hands to use it.",
+      "evitar": "Avoid: far and slow to press."
+    },
     "Visual": {
       "teclado": "Keyboard and mouse",
       "controle": "Controller",
       "Esquerdo": "Left button (Foundry)",
       "Direito": "Right button (Foundry)",
       "SemControle": "No controller connected",
-      "Movimento": "Movement",
-      "Camera": "Camera",
       "Sobreposta": "Overlap",
-      "Composta": "Combo"
+      "Composta": "Combo",
+      "Pedra": "Stone key"
     },
     "Captura": {
       "Aperte": "Press",
@@ -100,42 +106,22 @@
     "Resumo": {
       "Atalhos": "{acoes} actions bound to {entradas} keys and buttons",
       "Colisoes": "{n} sharing a key",
-      "SemUso": "{n} unused"
+      "Perto": "All optimized: everything is close to your hands.",
+      "Algumas": "{n} actions are out of reach: you'll switch hands to use them.",
+      "Longe": "Most of your actions are out of reach: you'll keep switching hands and taking your hand off the mouse."
     },
     "Ergonomia": {
-      "esquerda0": "Left hand on WASD: reaches without moving the hand.",
-      "esquerda1": "The finger stretches; the hand stays on WASD.",
-      "esquerda2": "The left hand leaves WASD to reach.",
-      "direita": "Out of the left hand's reach: the right hand leaves the mouse (round trip ≈ {s} s).",
-      "funcao": "F row: the hand leaves its position (round trip ≈ {s} s).",
-      "navegacao": "Arrows and navigation keys: the right hand leaves the mouse (round trip ≈ {s} s).",
-      "numerico": "Numpad: the right hand leaves the mouse (round trip ≈ {s} s).",
       "sistema": "Key taken by the system or the browser.",
-      "mouse": "Thumb on the side button: the hand stays on the mouse.",
-      "rodinha": "Wheel click: the hand stays, but the wheel can turn along.",
-      "gatilho": "Index finger on the trigger: thumbs stay on the sticks.",
-      "face": "The right thumb leaves the stick.",
-      "direcional": "The left thumb leaves the stick.",
-      "centro": "Center button: the thumb leaves the stick.",
-      "cliqueAnalogico": "Stick click: easy to press by accident while moving.",
-      "eixoMover": "Stick for a continuous action: the thumb stays put.",
-      "eixoToque": "Stick for a one-shot action: fires by accident.",
-      "botaoSistema": "System button: opens the controller or Steam menu.",
+      "acidente": "Stick: easy to press by accident while moving.",
       "desconhecida": "Key outside the standard keyboard.",
-      "protegida": "Foundry doesn't accept this key.",
       "simultaneas": "{n} keys at once.",
       "duasMaos": "Modifier and key in different hands: both leave their position.",
-      "esticaCombo": "Modifier with a stretched key: the left hand spreads too far.",
-      "segurarLonge": "Hold action: the key stays down while the other hand works.",
-      "navegadorReservada": "{dono} takes this key before the page: {funcao}.",
+      "esticaCombo": "Modifier with a distant key.",
       "dicaMeio": "Foundry locks tooltips with the middle button.",
-      "teclaWindows": "The Windows key opens the Start menu.",
       "colisao": "Same shortcut as: {nomes}.",
-      "frequenteLonge": "Used {vezes} times: frequent action far from the hand.",
-      "semUso": "Unused since counting started.",
       "caractere": "Stored as a character, not a key code: Foundry doesn't fire this shortcut.",
-      "navegadorUsa": "Also a {dono} shortcut: {funcao}.",
-      "sistemaUsa": "{dono} takes this key before the page: {funcao}.",
+      "navegadorUsa": "Also a Stone key: {funcao}.",
+      "pedraAntes": "Stone key: {funcao} takes it first.",
       "toques": "{n} taps in a row, up to {s} s apart: costs time and fires by accident easily.",
       "sequencia": "{n} keys in sequence, up to {s} s apart.",
       "juntas": "{n} keys together: the second within {s} s of the first.",

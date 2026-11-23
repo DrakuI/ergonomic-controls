@@ -3,31 +3,29 @@
  * um atalho. Sem dependência do Foundry: o que vem dele chega por parâmetro.
  *
  * Fundamentos:
- * - Posição de jogo no Foundry: mão esquerda no WASD (médio no W, anelar no A, indicador no D, mindinho em Shift e
- *   Ctrl, polegar no espaço) e mão direita no mouse.
+ * - Posição de jogo: uma mão nas teclas de movimento do token e a outra no mouse. Com o movimento no WASD (padrão do
+ *   Foundry), mão esquerda no WASD (médio no W, anelar no A, indicador no D, mindinho em Shift e Ctrl, polegar no
+ *   espaço) e direita no mouse; com o movimento nas setas, no teclado numérico ou em letras da direita, a mão direita
+ *   fica nelas e a esquerda no mouse. As teclas do movimento são stone keys: a mão mora nelas.
  * - Keystroke-Level Model (Card, Moran e Newell, 1983): levar a mão entre teclado e mouse (operador H) custa cerca
  *   de 0,4 s em cada sentido; cada Shift ou Ctrl é um toque à parte (operador K).
+ * - No controle, os dedos não saem do lugar para nenhum botão; o custo está em apertar dois botões ao mesmo tempo.
  * - Princípios de arranjo de controles: o mais importante e o mais usado ficam mais acessíveis; o que é usado em
  *   sequência fica junto.
  * - Diretrizes de acessibilidade de jogos (Game Accessibility Guidelines; Xbox Accessibility Guideline 107): evitar
  *   teclas simultâneas e botões segurados, controles simples e remapeáveis, perfis.
- * - Lei de Hick-Hyman: o tempo de decisão cresce com o número de opções; atalho sem uso é custo.
- * - No controle, os botões de face tiram o polegar direito do analógico (o que leva à "garra"); bumpers e gatilhos
- *   são dos indicadores e deixam os polegares nos analógicos.
+ * - Lei de Hick-Hyman: o tempo de decisão cresce com o número de opções.
  * - Relatos de jogadores (fóruns de jogos, Reddit): toque duplo é rejeitado nas teclas de movimento (dispara sem
  *   querer) e atrasa a tecla sozinha; segurar é aceito em ação séria ou rara e rejeitado na rotina; botões laterais
  *   do mouse são o lugar preferido para esquiva e ações frequentes; apertos simultâneos precisam de janela
  *   (QMK usa 50 ms; jogos de luta com 1 quadro são difíceis).
  */
 
-import { lerGesto, TEMPOS } from "./gestos.mjs";
+import { lerGesto, teclasDe, TEMPOS } from "./gestos.mjs";
 
 /** Níveis de alcance, do melhor ao pior. */
 export const NIVEL = Object.freeze({ NA_MAO: 0, PERTO: 1, ESTICAR: 2, TROCA: 3, EVITAR: 4 });
 export const NIVEIS = ["naMao", "perto", "esticar", "troca", "evitar"];
-
-/** Ida e volta da mão entre teclado e mouse, em segundos (2 × H do KLM). */
-export const TEMPO_TROCA = 0.8;
 
 /* -------------------------------------------- */
 /*  Teclado                                     */
@@ -103,35 +101,150 @@ export function rotuloTecla(code, layout) {
   return code;
 }
 
+/** Códigos de modificador como o Foundry agrupa (KeyboardManager.MODIFIER_CODES). */
+export const CODIGOS_MODIFICADORES = Object.freeze({
+  Control: ["ControlLeft", "ControlRight", "MetaLeft", "MetaRight", "Meta", "OsLeft", "OsRight"],
+  Shift: ["ShiftLeft", "ShiftRight"],
+  Alt: ["AltLeft", "AltRight"]
+});
+const TECLAS_MODIFICADORAS = new Set(Object.values(CODIGOS_MODIFICADORES).flat());
+export const ehModificador = (code) => TECLAS_MODIFICADORAS.has(code);
+
 /* -------------------------------------------- */
-/*  Zonas de alcance                            */
+/*  Mãos e alcance                              */
 /* -------------------------------------------- */
 
-const ZONAS = new Map();
-const zona = (nivel, regiao, codes) => { for (const c of codes) ZONAS.set(c, { nivel, regiao }); };
+/** Teclas tomadas pelo sistema (stone keys do teclado): Windows, menu de contexto e as travas. */
+const SISTEMA = new Set(["MetaLeft", "MetaRight", "OsLeft", "OsRight", "ContextMenu", "PrintScreen", "ScrollLock",
+  "NumLock", "CapsLock"]);
+export const ehDoSistema = (code) => SISTEMA.has(code);
 
-// Sem mexer a mão esquerda.
-zona(0, "esquerda", ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyA", "KeyS", "KeyD", "KeyF", "KeyZ", "KeyX", "KeyC", "KeyV",
-  "Digit1", "Digit2", "Digit3", "Digit4", "Tab", "Space", "ShiftLeft", "ControlLeft", "AltLeft"]);
-// O dedo estica; a mão fica.
-zona(1, "esquerda", ["Digit5", "KeyT", "KeyG", "KeyB", "Backquote", "IntlBackslash", "CapsLock"]);
-// A mão esquerda sai do WASD.
-zona(2, "esquerda", ["Digit6", "KeyY", "KeyH", "KeyN", "Escape", "F1", "F2", "F3", "F4"]);
-// Fora do alcance da mão esquerda: a direita sai do mouse.
-zona(3, "direita", ["Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal", "Backspace", "KeyU", "KeyI", "KeyO",
-  "KeyP", "BracketLeft", "BracketRight", "Enter", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Backslash", "KeyM",
-  "Comma", "Period", "Slash", "IntlRo", "ShiftRight", "AltRight", "ControlRight"]);
-zona(3, "funcao", ["F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"]);
-zona(3, "navegacao", ["Insert", "Home", "PageUp", "Delete", "End", "PageDown", "ArrowUp", "ArrowLeft", "ArrowDown",
-  "ArrowRight"]);
-zona(3, "numerico", ["NumpadDivide", "NumpadMultiply", "NumpadSubtract", "Numpad7", "Numpad8", "Numpad9", "NumpadAdd",
-  "Numpad4", "Numpad5", "Numpad6", "Numpad1", "Numpad2", "Numpad3", "NumpadEnter", "Numpad0", "NumpadDecimal"]);
-// Tomadas pelo sistema.
-zona(4, "sistema", ["MetaLeft", "MetaRight", "ContextMenu", "PrintScreen", "ScrollLock", "Pause", "NumLock", "OsLeft",
-  "OsRight"]);
-// Mouse: botões laterais no polegar; o do meio é a rodinha.
-zona(0, "mouse", ["Mouse4", "Mouse5"]);
-zona(1, "rodinha", ["Mouse3"]);
+/** Centro de cada tecla, em unidades. */
+const CENTRO = new Map(TECLADO.map((t) => [t.code, { x: t.x + (t.w / 2), y: t.y + (t.h / 2) }]));
+
+/** Fileiras de caractere, da esquerda para a direita (para deslocar o modelo do WASD: ESDF, RDFG…). */
+const FILEIRAS = [
+  ["Backquote", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0",
+    "Minus", "Equal"],
+  ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight"],
+  ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Backslash"],
+  ["IntlBackslash", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "IntlRo"]
+];
+
+/** Nível de cada tecla com a mão esquerda no WASD; o que não está aqui fica para a outra mão. */
+const MODELO_WASD = (() => {
+  const m = new Map();
+  const nivel = (n, codes) => { for (const c of codes) m.set(c, n); };
+  // Sem mexer a mão.
+  nivel(0, ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyA", "KeyS", "KeyD", "KeyF", "KeyZ", "KeyX", "KeyC", "KeyV", "Digit1",
+    "Digit2", "Digit3", "Digit4", "Tab", "Space", "ShiftLeft", "ControlLeft", "AltLeft"]);
+  // O dedo estica; a mão fica.
+  nivel(1, ["Digit5", "KeyT", "KeyG", "KeyB", "Backquote", "IntlBackslash"]);
+  // A mão sai do lugar.
+  nivel(2, ["Digit6", "KeyY", "KeyH", "KeyN", "Escape", "F1", "F2", "F3", "F4"]);
+  return m;
+})();
+
+/** Mão direita nas setas (indicador no ←, médio no ↓ e ↑, anelar no →); a esquerda no mouse. */
+const MODELO_SETAS = (() => {
+  const m = new Map();
+  const nivel = (n, codes) => { for (const c of codes) m.set(c, n); };
+  nivel(0, ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "ControlRight", "Numpad0", "Numpad1"]);
+  nivel(1, ["ShiftRight", "AltRight", "Numpad2", "Numpad3", "NumpadDecimal", "NumpadEnter", "Slash", "IntlRo"]);
+  nivel(2, ["Delete", "End", "PageDown", "Enter", "Numpad4", "Numpad5", "Numpad6", "Period", "Comma", "Quote",
+    "Backslash"]);
+  return m;
+})();
+
+/** Mão direita no teclado numérico (indicador no 4, médio no 5 e 8, anelar no 6, polegar no 0); a esquerda no mouse. */
+const MODELO_NUMERICO = (() => {
+  const m = new Map();
+  const nivel = (n, codes) => { for (const c of codes) m.set(c, n); };
+  nivel(0, ["Numpad0", "Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8",
+    "Numpad9", "NumpadDecimal", "NumpadEnter", "NumpadAdd", "NumpadSubtract", "NumpadMultiply", "NumpadDivide"]);
+  nivel(1, ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Delete", "End", "PageDown"]);
+  nivel(2, ["Insert", "Home", "PageUp", "ControlRight", "ShiftRight", "Enter"]);
+  return m;
+})();
+
+/** Modelo do WASD deslocado `delta` teclas nas fileiras de caractere (ESDF = 1); o resto continua igual. */
+function modeloDeslocado(delta) {
+  if (!delta) return MODELO_WASD;
+  const m = new Map(MODELO_WASD);
+  for (const fileira of FILEIRAS) {
+    for (const c of fileira) m.delete(c);
+    fileira.forEach((c, i) => {
+      const origem = fileira[Math.min(Math.max(i - delta, 0), fileira.length - 1)];
+      if (MODELO_WASD.has(origem)) m.set(c, MODELO_WASD.get(origem));
+    });
+  }
+  return m;
+}
+
+/** Nível pela distância (em teclas) até a tecla de movimento mais próxima: letras da direita (IJKL…). */
+function modeloPorDistancia(casa) {
+  const m = new Map();
+  const pontos = [...casa].map((c) => CENTRO.get(c)).filter(Boolean);
+  for (const t of TECLADO) {
+    if (SISTEMA.has(t.code)) continue;
+    const c = CENTRO.get(t.code);
+    const d = Math.min(...pontos.map((p) => Math.hypot(p.x - c.x, (p.y - c.y) * 1.1)));
+    if (d <= 1.6) m.set(t.code, 0);
+    else if (d <= 2.6) m.set(t.code, 1);
+    else if (d <= 3.6) m.set(t.code, 2);
+  }
+  return m;
+}
+
+/** Grupo de uma tecla de movimento: letras da esquerda, letras da direita, setas ou teclado numérico. */
+function grupoDoMovimento(code) {
+  if (code.startsWith("Numpad")) return "numerico";
+  if (code.startsWith("Arrow")) return "setas";
+  return (CENTRO.get(code).x < 7.5) ? "esquerda" : "direitaLetras";
+}
+
+const X_DO_WASD = ["KeyW", "KeyA", "KeyS", "KeyD"].reduce((s, c) => s + CENTRO.get(c).x, 0) / 4;
+
+/**
+ * Onde ficam as mãos, pelas teclas de movimento do token: o maior grupo delas (empate: o do primeiro atalho) é a casa
+ * de uma mão; a outra fica no mouse. Sem tecla de movimento, o padrão do Foundry (WASD).
+ * @param {string[]} [movimento]  Teclas dos atalhos de movimento, na ordem dos atalhos.
+ * @returns {{modelo: "wasd"|"setas"|"numerico"|"distancia", lado: "esquerda"|"direita", delta: number,
+ *   casa: Set<string>, movimento: Set<string>, zonas: Map<string, number>}}
+ */
+export function maosDe(movimento = []) {
+  const teclas = [...new Set(movimento)].filter((c) => CENTRO.has(c) && !SISTEMA.has(c) && !ehModificador(c));
+  const chave = teclas.join();
+  if (MAOS_CACHE.has(chave)) return MAOS_CACHE.get(chave);
+  let maos;
+  if (!teclas.length) maos = { modelo: "wasd", lado: "esquerda", delta: 0, casa: new Set(), zonas: MODELO_WASD };
+  else {
+    const grupos = new Map();
+    for (const c of teclas) {
+      const g = grupoDoMovimento(c);
+      if (!grupos.has(g)) grupos.set(g, []);
+      grupos.get(g).push(c);
+    }
+    const primeiro = grupoDoMovimento(teclas[0]);
+    const [grupo, casa] = [...grupos].sort((a, b) => (b[1].length - a[1].length)
+      || (Number(b[0] === primeiro) - Number(a[0] === primeiro)))[0];
+    if (grupo === "setas") maos = { modelo: "setas", lado: "direita", delta: 0, casa: new Set(casa), zonas: MODELO_SETAS };
+    else if (grupo === "numerico") maos = { modelo: "numerico", lado: "direita", delta: 0, casa: new Set(casa), zonas: MODELO_NUMERICO };
+    else if (grupo === "esquerda") {
+      const x = casa.reduce((s, c) => s + CENTRO.get(c).x, 0) / casa.length;
+      const delta = Math.max(-1, Math.min(3, Math.round(x - X_DO_WASD)));
+      maos = { modelo: "wasd", lado: "esquerda", delta, casa: new Set(casa), zonas: modeloDeslocado(delta) };
+    }
+    else maos = { modelo: "distancia", lado: "direita", delta: 0, casa: new Set(casa), zonas: modeloPorDistancia(casa) };
+  }
+  maos.movimento = new Set(teclas);
+  MAOS_CACHE.set(chave, maos);
+  return maos;
+}
+const MAOS_CACHE = new Map();
+
+/** Mãos do padrão do Foundry: esquerda no WASD, direita no mouse. */
+export const MAOS_PADRAO = maosDe(["KeyW", "KeyA", "KeyS", "KeyD"]);
 
 /* -------------------------------------------- */
 /*  Mouse                                       */
@@ -150,15 +263,16 @@ export const MOUSE = Object.freeze([
 
 /**
  * Botões do mapeamento padrão da Gamepad API, com nível e região. O Foundry converte cada botão em tecla
- * `<ID>_BUTTON<n>_PRESSED` e cada sentido de eixo em `<ID>_AXIS<n>_POSITIVE|NEGATIVE`.
+ * `<ID>_BUTTON<n>_PRESSED` e cada sentido de eixo em `<ID>_AXIS<n>_POSITIVE|NEGATIVE`. Nenhum botão tira o dedo do
+ * lugar; o clique do analógico dispara sem querer e o botão Home é do sistema (stone key).
  */
 const CONTROLE_BOTOES = [
-  [1, "face"], [1, "face"], [1, "face"], [1, "face"],
+  [0, "face"], [0, "face"], [0, "face"], [0, "face"],
   [0, "gatilho"], [0, "gatilho"], [0, "gatilho"], [0, "gatilho"],
-  [2, "centro"], [2, "centro"],
-  [2, "cliqueAnalogico"], [2, "cliqueAnalogico"],
-  [1, "direcional"], [1, "direcional"], [1, "direcional"], [1, "direcional"],
-  [4, "botaoSistema"]
+  [0, "centro"], [0, "centro"],
+  [1, "acidente"], [1, "acidente"],
+  [0, "direcional"], [0, "direcional"], [0, "direcional"], [0, "direcional"],
+  [4, "sistema"]
 ];
 
 const ROTULOS_CONTROLE = {
@@ -218,97 +332,103 @@ export function rotuloControle(info) {
  * Dispositivo, nível e região de uma entrada (código de tecla do Foundry).
  * @param {string} code
  * @param {{repeticao?: boolean}} [acao]  Ação com repetição (movimento) aproveita analógico.
+ * @param {ReturnType<typeof maosDe>} [maos]  Onde as mãos ficam.
+ * @returns {{dispositivo: "teclado"|"mouse"|"controle", nivel: number, regiao: string, pedra?: boolean,
+ *   controle?: object, gesto?: object}}
  */
-export function infoEntrada(code, acao = {}) {
+export function infoEntrada(code, acao = {}, maos = MAOS_PADRAO) {
   // Tecla composta: vale a entrada mais longe dela, e o composto vai junto.
   const gesto = lerGesto(code);
   if (gesto) {
-    const infos = [...gesto.todas].map((c) => infoEntrada(c, acao));
-    return { ...infos.reduce((a, b) => ((b.nivel > a.nivel) ? b : a)), gesto };
+    const infos = [...gesto.todas].map((c) => infoEntrada(c, acao, maos));
+    return { ...infos.reduce((a, b) => ((b.nivel > a.nivel) ? b : a)), gesto, pedra: infos.some((i) => i.pedra) };
   }
   const controle = lerControle(code);
   if (controle) {
     if (controle.tipo === "eixo") {
-      return { dispositivo: "controle", controle, nivel: acao.repeticao ? 0 : 2,
-        regiao: acao.repeticao ? "eixoMover" : "eixoToque" };
+      return acao.repeticao ? { dispositivo: "controle", controle, nivel: NIVEL.NA_MAO, regiao: "eixo" }
+        : { dispositivo: "controle", controle, nivel: NIVEL.PERTO, regiao: "acidente" };
     }
-    const [nivel, regiao] = CONTROLE_BOTOES[controle.indice] ?? [2, "centro"];
-    return { dispositivo: "controle", controle, nivel, regiao };
+    const [nivel, regiao] = CONTROLE_BOTOES[controle.indice] ?? [NIVEL.NA_MAO, "centro"];
+    return { dispositivo: "controle", controle, nivel, regiao, pedra: regiao === "sistema" };
   }
   // KeyboardEvent.code nunca tem um caractere só ("r" no lugar de "KeyR"): o atalho não dispara.
   if ([...code].length === 1) return { dispositivo: "teclado", nivel: NIVEL.EVITAR, regiao: "caractere" };
-  const z = ZONAS.get(code);
-  if (!z) return { dispositivo: "teclado", nivel: 3, regiao: "desconhecida" };
-  const mouse = (z.regiao === "mouse") || (z.regiao === "rodinha");
-  return { dispositivo: mouse ? "mouse" : "teclado", nivel: z.nivel, regiao: z.regiao };
+  // Botões laterais no polegar; o do meio é a rodinha.
+  if ((code === "Mouse4") || (code === "Mouse5")) return { dispositivo: "mouse", nivel: NIVEL.NA_MAO, regiao: "mouse" };
+  if (code === "Mouse3") return { dispositivo: "mouse", nivel: NIVEL.PERTO, regiao: "rodinha" };
+  if (SISTEMA.has(code)) return { dispositivo: "teclado", nivel: NIVEL.EVITAR, regiao: "sistema", pedra: true };
+  if (!CENTRO.has(code)) return { dispositivo: "teclado", nivel: NIVEL.TROCA, regiao: "desconhecida" };
+  return { dispositivo: "teclado", nivel: maos.zonas.get(code) ?? NIVEL.TROCA, regiao: "teclado" };
+}
+
+/** Nível de um modificador do Foundry: a tecla mais perto entre as que o fazem (esquerda ou direita). */
+function nivelDoModificador(mod, maos) {
+  const codes = (CODIGOS_MODIFICADORES[mod] ?? []).filter((c) => CENTRO.has(c) && !SISTEMA.has(c));
+  return codes.length ? Math.min(...codes.map((c) => maos.zonas.get(c) ?? NIVEL.TROCA)) : NIVEL.NA_MAO;
 }
 
 /* -------------------------------------------- */
 /*  Avaliação                                   */
 /* -------------------------------------------- */
 
-/** Códigos de modificador como o Foundry agrupa (KeyboardManager.MODIFIER_CODES). */
-export const CODIGOS_MODIFICADORES = Object.freeze({
-  Control: ["ControlLeft", "ControlRight", "MetaLeft", "MetaRight", "Meta", "OsLeft", "OsRight"],
-  Shift: ["ShiftLeft", "ShiftRight"],
-  Alt: ["AltLeft", "AltRight"]
-});
-const TECLAS_MODIFICADORAS = new Set(Object.values(CODIGOS_MODIFICADORES).flat());
-export const ehModificador = (code) => TECLAS_MODIFICADORAS.has(code);
 
 /**
- * Avalia um atalho.
+ * Avalia um atalho. O alcance vira o nível (a cor); os motivos ficam para o que a cor não diz.
  * @param {{key: string, modifiers?: string[]}} binding
  * @param {object} [opcoes]
  * @param {{segurar?: boolean, repeticao?: boolean}} [opcoes.acao]  Ação de segurar (tem onUp) e de repetição.
+ * @param {ReturnType<typeof maosDe>} [opcoes.maos]  Onde as mãos ficam (padrão: WASD e mouse).
+ * @param {"externa"|"movimento"} [opcoes.pedra]   Atalho que é stone key: do navegador ou do sistema, ou do movimento.
  * @param {string[]} [opcoes.protegidas]          Teclas que o Foundry não aceita (KeyboardManager.PROTECTED_KEYS).
  * @param {string[]} [opcoes.colisoes]            Nomes das ações que disparam no mesmo atalho.
- * @param {{nome: string, dono: "navegador"|"sistema", donoNome: string, essencial?: boolean, reservada?: boolean}[]}
- *   [opcoes.ocupacoes]  Funções do navegador e do sistema que continuam no mesmo atalho.
+ * @param {{nome: string, dono: "navegador"|"sistema", reservada?: boolean}[]} [opcoes.ocupacoes]  Stone keys do
+ *   navegador e do sistema no mesmo atalho.
  * @param {number} [opcoes.vezes]                 Usos medidos da ação.
  * @param {boolean} [opcoes.frequente]            Ação entre as mais usadas.
- * @param {boolean} [opcoes.semUso]               Ação sem uso desde que a contagem começou.
  * @param {boolean} [opcoes.movimento]            Composto de toques numa tecla que também move.
  * @param {{id: string, dados?: object}[]} [opcoes.esperas]  Esperas entre composto e tecla sozinha na mesma camada.
- * @returns {{nivel: number, info: object, motivos: {id: string, dados?: object}[], invalida: boolean}}
+ * @returns {{nivel: number, pedra: boolean, info: object, motivos: {id: string, dados?: object}[], invalida: boolean}}
  */
 export function avaliar(binding, opcoes = {}) {
-  const { acao = {}, protegidas = [], colisoes = [], ocupacoes = [] } = opcoes;
+  const { acao = {}, protegidas = [], colisoes = [], ocupacoes = [], maos = MAOS_PADRAO } = opcoes;
   const key = binding.key;
-  const info = infoEntrada(key, acao);
+  const info = infoEntrada(key, acao, maos);
   const modificadores = ehModificador(key) ? [] : (binding.modifiers ?? []);
   const motivos = [];
   let nivel = info.nivel;
-  let invalida = false;
+  const protegida = teclasDe(key).some((k) => protegidas.includes(k));
+  const pedra = Boolean(opcoes.pedra || info.pedra || protegida);
+  const invalida = info.regiao === "caractere";
 
-  if (protegidas.includes(key)) {
-    motivos.push({ id: "protegida" });
-    return { nivel: NIVEL.EVITAR, info, motivos, invalida: true };
-  }
+  if (invalida) motivos.push({ id: "caractere" });
+  else if (info.regiao === "desconhecida") motivos.push({ id: "desconhecida" });
+  if ((opcoes.pedra === "externa") || (info.regiao === "sistema") || protegida) motivos.push({ id: "sistema" });
+  if (info.regiao === "acidente") motivos.push({ id: "acidente" });
 
-  motivos.push({ id: info.regiao === "esquerda" ? `esquerda${info.nivel}` : info.regiao, dados: { s: TEMPO_TROCA } });
-  if (info.regiao === "caractere") invalida = true;
-
-  // Teclas ao mesmo tempo (KLM: cada modificador é um toque; diretrizes: evitar simultâneas).
+  // Teclas ao mesmo tempo (KLM: cada modificador é um toque; diretrizes: evitar simultâneas). O modificador vale pela
+  // tecla mais perto da mão (Ctrl da esquerda ou da direita).
   const n = modificadores.length;
   if (n >= 2) {
     motivos.push({ id: "simultaneas", dados: { n: n + 1 } });
     nivel = Math.max(nivel, NIVEL.ESTICAR);
   }
-  if (n >= 1 && (info.dispositivo === "teclado")) {
-    if (info.nivel >= NIVEL.TROCA) {
+  if ((n >= 1) && (info.dispositivo !== "controle")) {
+    const nivelMod = Math.max(...modificadores.map((m) => nivelDoModificador(m, maos)));
+    const nivelTecla = (info.dispositivo === "teclado") ? info.nivel : NIVEL.NA_MAO;
+    if ((nivelTecla >= NIVEL.TROCA) || (nivelMod >= NIVEL.TROCA)) {
       motivos.push({ id: "duasMaos" });
       nivel = Math.max(nivel, NIVEL.TROCA);
     }
-    else if (info.nivel === NIVEL.ESTICAR) {
+    else if ((nivelTecla === NIVEL.ESTICAR) || (nivelMod === NIVEL.ESTICAR)) {
       motivos.push({ id: "esticaCombo" });
       nivel = Math.max(nivel, NIVEL.TROCA);
     }
   }
 
   // Tecla composta: toques seguidos e sequências custam tempo e disparam sem querer (jogadores desligam o toque
-  // duplo, sobretudo nas teclas de movimento); segurar paga o tempo a cada uso; teclas juntas têm janela curta.
-  let frequenteComposto = false;
+  // duplo, sobretudo nas teclas de movimento); segurar paga o tempo a cada uso; teclas juntas têm janela curta e, no
+  // controle, tiram o dedo de um dos botões.
   if (info.gesto) {
     const p = info.gesto.pressoes;
     const mesmas = p.every((x) => (x.teclas.length === 1) && (x.teclas[0] === p[0].teclas[0]));
@@ -319,7 +439,7 @@ export function avaliar(binding, opcoes = {}) {
     const juntas = Math.max(...p.map((x) => x.teclas.length));
     if (juntas >= 2) {
       motivos.push({ id: "juntas", dados: { n: juntas, s: TEMPOS.juntas / 1000 } });
-      nivel = Math.max(nivel, NIVEL.PERTO);
+      nivel = Math.max(nivel, (info.dispositivo === "controle") ? NIVEL.ESTICAR : NIVEL.PERTO);
     }
     const segurar = Math.max(...p.map((x) => x.segurar));
     if (segurar) {
@@ -331,42 +451,21 @@ export function avaliar(binding, opcoes = {}) {
       nivel = Math.max(nivel, NIVEL.TROCA);
     }
     if (opcoes.frequente && ((p.length >= 2) || segurar)) {
-      frequenteComposto = true;
       motivos.push({ id: "frequenteComposto", dados: { vezes: opcoes.vezes } });
       nivel = Math.min(NIVEL.EVITAR, nivel + 1);
     }
   }
   for (const espera of opcoes.esperas ?? []) motivos.push(espera);
 
-  // Segurar longe da mão: a tecla fica apertada enquanto a outra mão trabalha.
-  if (acao.segurar && (nivel >= NIVEL.ESTICAR)) {
-    motivos.push({ id: "segurarLonge" });
-    nivel = Math.min(NIVEL.EVITAR, nivel + 1);
-  }
-
-  // Navegador e sistema: o que eles tratam antes da página não chega ao Foundry; recarregar, tela cheia e ferramentas
-  // do desenvolvedor somem quando um atalho do Foundry consome a tecla.
+  // Stone keys do navegador e do sistema no mesmo aperto: só avisa; o atalho continua valendo.
   for (const o of ocupacoes) {
-    const dados = { funcao: o.nome, dono: o.donoNome };
-    if (o.dono === "sistema") motivos.push({ id: "sistemaUsa", dados });
-    else motivos.push({ id: o.reservada ? "navegadorReservada" : "navegadorUsa", dados });
-    if ((o.dono === "sistema") || o.reservada || o.essencial) nivel = NIVEL.EVITAR;
+    motivos.push({ id: (o.reservada || (o.dono === "sistema")) ? "pedraAntes" : "navegadorUsa", dados: { funcao: o.nome } });
   }
 
   if (key === "Mouse3") motivos.push({ id: "dicaMeio" });
-  if ((key === "MetaLeft") || (key === "MetaRight") || (binding.modifiers ?? []).includes("Meta")) {
-    motivos.push({ id: "teclaWindows" });
-  }
-
   if (colisoes.length) motivos.push({ id: "colisao", dados: { nomes: colisoes } });
 
-  // Frequência medida.
-  if (opcoes.frequente && (nivel >= NIVEL.ESTICAR) && !frequenteComposto) {
-    motivos.push({ id: "frequenteLonge", dados: { vezes: opcoes.vezes } });
-  }
-  else if (opcoes.semUso) motivos.push({ id: "semUso" });
-
-  return { nivel, info, motivos, invalida };
+  return { nivel, pedra, info, motivos, invalida };
 }
 
 /* -------------------------------------------- */
@@ -380,14 +479,27 @@ const PREFERENCIA = ["KeyQ", "KeyE", "KeyR", "KeyF", "Mouse4", "Mouse5", "KeyZ",
 /** Botões do controle por alcance: ombros e gatilhos, direcional, botões de face (mapeamento padrão). */
 const PREFERENCIA_CONTROLE = [4, 5, 6, 7, 12, 13, 14, 15, 0, 1, 2, 3];
 
+/** Ordem de preferência fora do WASD: o que está na mão primeiro, do mais perto das teclas de movimento. */
+function preferenciaDe(maos) {
+  const pontos = [...maos.casa].map((c) => CENTRO.get(c));
+  const cx = pontos.reduce((s, p) => s + p.x, 0) / pontos.length;
+  const cy = pontos.reduce((s, p) => s + p.y, 0) / pontos.length;
+  const distancia = (c) => Math.hypot(CENTRO.get(c).x - cx, CENTRO.get(c).y - cy);
+  const teclas = [...maos.zonas].filter(([c, n]) => (n <= NIVEL.PERTO) && !maos.movimento.has(c) && !ehModificador(c)
+    && (c !== "Space") && CENTRO.has(c)).sort((a, b) => (a[1] - b[1]) || (distancia(a[0]) - distancia(b[0])))
+    .map(([c]) => c);
+  return [...teclas.slice(0, 4), "Mouse4", "Mouse5", ...teclas.slice(4)];
+}
+
 /**
  * Entradas livres por perto.
  * @param {(binding: {key: string, modifiers: string[]}) => boolean} ocupada
  * @param {number} [limite]
  * @param {string|null} [controle]  Id do controle (como no código do Foundry): sugere botões dele.
+ * @param {ReturnType<typeof maosDe>} [maos]  Onde as mãos ficam.
  * @returns {{key: string, modifiers: string[]}[]}
  */
-export function sugerir(ocupada, limite = 6, controle = null) {
+export function sugerir(ocupada, limite = 6, controle = null, maos = MAOS_PADRAO) {
   const livres = [];
   if (controle) {
     for (const indice of PREFERENCIA_CONTROLE) {
@@ -397,9 +509,10 @@ export function sugerir(ocupada, limite = 6, controle = null) {
     }
     return livres;
   }
+  const preferencia = ((maos.modelo === "wasd") && !maos.delta) ? PREFERENCIA : preferenciaDe(maos);
   for (const modifiers of [[], ["Shift"]]) {
-    for (const key of PREFERENCIA) {
-      if (ehModificador(key)) continue;
+    for (const key of preferencia) {
+      if (ehModificador(key) || maos.movimento?.has(key)) continue;
       if (key.startsWith("Mouse") && modifiers.length) continue;
       const binding = { key, modifiers };
       if (!ocupada(binding)) livres.push(binding);

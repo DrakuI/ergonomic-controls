@@ -7,12 +7,12 @@
 
 import {
   TECLADO, MOUSE, NIVEIS, NIVEL, rotuloTecla, infoEntrada, avaliar, sugerir, colidem, chaveAtalho, ehModificador,
-  lerControle, rotuloControle, codigoBotao, codigoEixo
+  ehDoSistema, maosDe, lerControle, rotuloControle, codigoBotao, codigoEixo
 } from "./ergonomia.mjs";
 import { ehGesto, lerGesto, teclasDe, montarPressoes, escreverGesto, arredondarSegurar, TEMPOS, LIMITES } from "./gestos.mjs";
 
-/** Filtros da lista; "pedras" mostra os atalhos do navegador e do sistema no lugar das ações do Foundry. */
-const FILTROS = ["comAtalho", "todas", "longe", "colisoes", "semUso", "pedras"];
+/** Filtros da lista; "pedras" mostra as stone keys: atalhos do navegador e do sistema e o movimento do token. */
+const FILTROS = ["comAtalho", "todas", "longe", "colisoes", "pedras"];
 
 /**
  * Entrada de controle vista logo no início da captura já estava ativa (botão segurado, analógico com folga): fica de
@@ -175,8 +175,11 @@ export class InterfacePerfis {
     ao(this.el, "click", (e) => this.#aoClicar(e));
     ao(this.el, "change", (e) => this.#aoMudarCampo(e));
     ao(this.busca, "input", () => {
+      const tinhaTecla = Boolean(this.estado.entrada);
+      this.estado.entrada = null;
       this.estado.busca = this.busca.value;
       this.#renderLista();
+      if (tinhaTecla) this.#renderVisual();
     });
     ao(this.el, "pointerover", (e) => this.#aoPassar(e));
     ao(this.el, "pointerout", (e) => this.#aoPassar(e, true));
@@ -234,7 +237,18 @@ export class InterfacePerfis {
       }
     }
 
-    // O que continua com o navegador e com o sistema: entra no desenho como ocupado, numa lista própria e na
+    // Mãos: a do movimento do token nas teclas dele (stone keys), a outra no mouse.
+    const movimento = [];
+    for (const acao of acoes) {
+      if (acao.movimento !== "token") continue;
+      acao.pedra = acao.atalhos.length > 0;
+      for (const { binding } of acao.atalhos) {
+        if (!modificadoresDoAtalho(binding).length && !lerControle(binding.key) && !ehGesto(binding.key)) movimento.push(binding.key);
+      }
+    }
+    const maos = maosDe(movimento);
+
+    // O que continua com o navegador e com o sistema: entra no desenho como stone key, numa lista própria e na
     // avaliação dos atalhos do Foundry nas mesmas teclas.
     const ocupacoes = fonte.ocupacoes?.() ?? [];
     const externosPorTecla = new Map();
@@ -294,22 +308,22 @@ export class InterfacePerfis {
     }
 
     const niveis = [0, 0, 0, 0, 0];
-    const contagem = { comAtalho: 0, todas: acoes.length, longe: 0, colisoes: 0, semUso: 0, pedras: 0 };
+    const contagem = { comAtalho: 0, todas: acoes.length, longe: 0, colisoes: 0, pedras: 0 };
     for (const acao of acoes) {
       acao.vezes = uso.contagem[acao.id] ?? 0;
-      acao.semUso = uso.suficiente && (acao.atalhos.length > 0) && (acao.vezes === 0);
       let melhor = null;
       for (const atalho of acao.atalhos) {
         atalho.externos = externosDe(atalho.binding, acao.reservados);
         atalho.conflitoExterno = atalho.externos.some(pesado);
         atalho.avaliacao = avaliar(atalho.binding, {
           acao: { segurar: acao.segurar, repeticao: acao.repeticao },
+          maos,
+          pedra: acao.pedra ? "movimento" : undefined,
           protegidas,
           colisoes: [...(atalho.colisoes ?? [])].map((o) => o.nome),
           ocupacoes: atalho.externos,
           vezes: acao.vezes,
           frequente: uso.frequentes.has(acao.id),
-          semUso: acao.semUso,
           movimento: Boolean(atalho.movimento),
           esperas: esperas.get(atalho)
         });
@@ -322,7 +336,7 @@ export class InterfacePerfis {
       niveis[melhor]++;
       if (melhor >= NIVEL.TROCA) contagem.longe++;
       if (acao.colide) contagem.colisoes++;
-      if (acao.semUso) contagem.semUso++;
+      if (acao.pedra) contagem.pedras++;
     }
 
     // Linhas do navegador e do sistema (filtro "pedras"), fora das contagens do Foundry. As editáveis guardam a
@@ -336,22 +350,22 @@ export class InterfacePerfis {
         categoria: { id: `externa.${o.dono}`, titulo: donos[o.dono] ? `${titulo[o.dono]} · ${donos[o.dono]}` : titulo[o.dono],
           ordem: (o.dono === "navegador") ? 8 : 9 },
         fixos: editavel ? [] : o.atalhos, editaveis: editavel ? o.atalhos : [], padrao: o.padrao ?? o.atalhos,
-        alterada: Boolean(o.alterada), editavel, reservados: [], ordem: i, vezes: 0, semUso: false
+        alterada: Boolean(o.alterada), editavel, reservados: [], ordem: i, vezes: 0
       };
       externa.atalhos = o.atalhos.map((binding, indice) => {
         const foundry = (porTecla.get(binding.key) ?? []).filter((a) => colidem(a.binding, a.acao.reservados, binding, []));
         const nomes = [...new Set(foundry.map((a) => a.acao.nome))];
         return { binding, fixo: !editavel, indice: editavel ? indice : -1, acao: externa, foundry: nomes,
-          conflitoExterno: nomes.length && pesado(o), avaliacao: avaliar(binding, { colisoes: nomes }) };
+          conflitoExterno: nomes.length && pesado(o), avaliacao: avaliar(binding, { colisoes: nomes, pedra: "externa", maos }) };
       });
       externa.melhor = externa.atalhos.length ? Math.min(...externa.atalhos.map((a) => a.avaliacao.nivel)) : null;
       externa.colide = externa.atalhos.some((a) => a.conflitoExterno);
       return externa;
     });
-    contagem.pedras = externas.length;
+    contagem.pedras += externas.length;
 
     const porId = new Map([...acoes, ...externas].map((a) => [a.id, a]));
-    return { acoes, externas, porId, porTecla, externosPorTecla, contagem, niveis, uso, protegidas };
+    return { acoes, externas, porId, porTecla, externosPorTecla, contagem, niveis, uso, protegidas, maos };
   }
 
   /** Se um atalho novo dispararia junto com algum existente, do Foundry, do navegador ou do sistema. */
@@ -386,6 +400,11 @@ export class InterfacePerfis {
 
   #numero(n) {
     return this.fonte.numero?.(n) ?? String(n);
+  }
+
+  /** Quantas vezes a ação foi usada (uma vez tem texto próprio). */
+  #usada(n) {
+    return (n === 1) ? this.t("Lista.UsadaUma") : this.t("Lista.Usada", { n: this.#numero(n) });
   }
 
   #focoAtual() {
@@ -443,27 +462,25 @@ export class InterfacePerfis {
 
   #renderFiltros() {
     const c = this.#dados.contagem;
-    const chips = FILTROS
-      .filter((f) => (f !== "semUso") || this.#dados.uso.suficiente)
-      .map((f) => botao(`ec-filtro${this.estado.filtro === f ? " ec-ativo" : ""}`,
-        [this.t(`Filtros.${f}`), no("span", "ec-num", [this.#numero(c[f])])], { filtro: f }));
-    if (this.estado.entrada) {
-      chips.push(botao("ec-filtro ec-ativo ec-filtro-entrada",
-        [this.fonte.rotulo(this.estado.entrada), icone("fa-solid fa-xmark")], { limparEntrada: "1" }));
-    }
+    const ativo = this.estado.entrada ? null : this.estado.filtro;
+    const chips = FILTROS.map((f) => botao(`ec-filtro${ativo === f ? " ec-ativo" : ""}`,
+      [this.t(`Filtros.${f}`), no("span", "ec-num", [this.#numero(c[f])])], { filtro: f }));
     this.filtros.replaceChildren(...chips);
   }
 
   #passa(acao, termo) {
     const { filtro, entrada, selecionada } = this.estado;
-    if (entrada && !acao.atalhos.some((a) => teclasDe(a.binding.key).includes(entrada.key)
-      && daCamada(a.binding, new Set(entrada.modifiers)))) return false;
-    if (Boolean(acao.externa) !== (filtro === "pedras")) return false;
+    // Tecla clicada no desenho: tudo o que usa a tecla (do Foundry, do navegador e do sistema), em qualquer camada, ou
+    // só na camada de modificadores escolhida.
+    if (entrada) {
+      return acao.atalhos.some((a) => teclasDe(a.binding.key).includes(entrada.key)
+        && (!entrada.camada || daCamada(a.binding, new Set(entrada.modifiers))));
+    }
+    if ((filtro === "pedras") ? !(acao.externa || acao.pedra) : Boolean(acao.externa)) return false;
     const fixa = acao.id === selecionada;
     if ((filtro === "comAtalho") && !acao.atalhos.length && !fixa) return false;
     if ((filtro === "longe") && !((acao.melhor ?? 0) >= NIVEL.TROCA) && !fixa) return false;
     if ((filtro === "colisoes") && !acao.colide && !fixa) return false;
-    if ((filtro === "semUso") && !acao.semUso && !fixa) return false;
     if (!termo) return true;
     if (normalizar(acao.nome).includes(termo) || normalizar(acao.categoria.titulo).includes(termo)) return true;
     return acao.atalhos.some((a) => normalizar(this.fonte.rotulo(a.binding)).includes(termo));
@@ -512,12 +529,14 @@ export class InterfacePerfis {
     if (acao.restrita) li.classList.add("ec-restrita");
     if (acao.externa) li.classList.add("ec-externa");
     if (acao.id === this.estado.selecionada) li.classList.add("ec-selecionada");
-    const ponto = no("span", `ec-ponto ${acao.melhor === null ? "ec-sem" : `ec-n${acao.melhor}`}`);
-    if (acao.melhor !== null) ponto.dataset.tooltipText = this.t(`Niveis.${NIVEIS[acao.melhor]}`);
+    const pedra = Boolean(acao.externa || acao.pedra);
+    const ponto = no("span", `ec-ponto ${pedra ? "ec-pedra" : (acao.melhor === null) ? "ec-sem" : `ec-n${acao.melhor}`}`);
+    if (pedra) ponto.dataset.tooltipText = this.t("Visual.Pedra");
+    else if (acao.melhor !== null) ponto.dataset.tooltipText = this.#dicaNivel(acao.melhor);
     const nome = no("span", "ec-nome", [acao.nome]);
     if (acao.dica) nome.dataset.tooltipText = acao.dica;
     const uso = acao.vezes ? no("span", "ec-uso", [this.#numero(acao.vezes)]) : null;
-    if (uso) uso.dataset.tooltipText = this.t("Lista.Usada", { n: this.#numero(acao.vezes) });
+    if (uso) uso.dataset.tooltipText = this.#usada(acao.vezes);
     const atalhos = no("span", "ec-atalhos");
     for (const atalho of acao.atalhos) atalhos.append(this.#chip(acao, atalho));
     const capturandoNova = (this.captura?.acaoId === acao.id) && (this.captura.indice === null);
@@ -537,15 +556,17 @@ export class InterfacePerfis {
     const chave = chaveAtalho(atalho.binding);
     const capturando = (this.captura?.acaoId === acao.id) && (this.captura.indice === atalho.indice) && !atalho.fixo;
     if (capturando) return no("span", "ec-atalho ec-capturando-chip", [this.t("Captura.Aperte")]);
-    const chip = no("span", `ec-atalho ec-n${nivel}`);
+    const pedra = atalho.avaliacao.pedra || Boolean(acao.externa);
+    const chip = no("span", `ec-atalho ${pedra ? "ec-pedra" : `ec-n${nivel}`}`);
     Object.assign(chip.dataset, { acaoId: acao.id, chave, key: atalho.binding.key,
       mods: (atalho.binding.modifiers ?? []).join(",") });
     if (atalho.fixo) chip.classList.add("ec-fixo");
-    if (acao.externa) chip.classList.add("ec-externo");
     if (atalho.colisoes?.size || atalho.conflitoExterno) chip.classList.add("ec-colide");
     const foco = this.estado.foco;
     if (foco && (foco.acaoId === acao.id) && (foco.chave === chave)) chip.classList.add("ec-foco");
-    chip.append(botao("ec-rotulo", [this.fonte.rotulo(atalho.binding)], { acaoId: acao.id, chave }));
+    const rotulo = botao("ec-rotulo", [this.fonte.rotulo(atalho.binding)], { acaoId: acao.id, chave });
+    rotulo.dataset.tooltipText = pedra ? this.t("Visual.Pedra") : this.#dicaNivel(nivel);
+    chip.append(rotulo);
     if (!atalho.fixo) {
       chip.append(
         botao("ec-mini", [icone("fa-solid fa-pen")], { chipAcao: "trocar", acaoId: acao.id, indice: atalho.indice },
@@ -562,15 +583,17 @@ export class InterfacePerfis {
     this.abas.replaceChildren(...["teclado", "controle"].map((aba) => botao(
       `ec-aba${this.estado.aba === aba ? " ec-ativa" : ""}`, [this.t(`Visual.${aba}`)], { aba })));
     this.#renderDesenho();
-    const item = (classe, texto) => no("span", `ec-nivel-legenda ${classe}`, [no("span", "ec-amostra"), texto]);
+    const item = (classe, texto, dica) => {
+      const e = no("span", `ec-nivel-legenda ${classe}`, [no("span", "ec-amostra"), texto]);
+      if (dica) e.dataset.tooltipText = dica;
+      return e;
+    };
     this.legenda.replaceChildren(
-      ...NIVEIS.map((n, i) => item(`ec-n${i}`, this.t(`Niveis.${n}`))),
+      ...NIVEIS.map((n, i) => item(`ec-n${i}`, this.t(`Niveis.${n}`), this.#dicaNivel(i))),
       no("span", "ec-legenda-separador"),
-      item("ec-legenda-mov", this.t("Visual.Movimento")),
-      item("ec-legenda-camera", this.t("Visual.Camera")),
       item("ec-legenda-sobre", this.t("Visual.Sobreposta")),
       item("ec-legenda-composta", this.t("Visual.Composta")),
-      item("ec-legenda-pedra", this.t("Filtros.pedras"))
+      item("ec-legenda-pedra", this.t("Visual.Pedra"))
     );
     this.#renderAvaliacao();
   }
@@ -603,23 +626,51 @@ export class InterfacePerfis {
     return { sel, mods, focos: new Set(foco ? teclasDe(foco.atalho.binding.key) : []) };
   }
 
-  #marcarEntrada(el, code, destaques) {
-    el.dataset.code = code;
+  /**
+   * Usos de uma entrada na camada de modificadores mostrada, e se ela é stone key nessa camada: movimento do token,
+   * tecla do sistema ou recusada pelo Foundry, ou só do navegador e do sistema.
+   */
+  #usosDaEntrada(code) {
     const camada = this.#camadaAtual();
     const usados = (this.#dados.porTecla.get(code) ?? []).filter((a) => daCamada(a.binding, camada));
-    if (usados.length) el.classList.add("ec-ocupada");
     const externos = (this.#dados.externosPorTecla.get(code) ?? []).filter((x) => daCamada(x.binding, camada));
+    const pedra = usados.some((a) => a.acao.pedra && !a.gesto) || ehDoSistema(code) || this.#dados.protegidas.includes(code)
+      || (externos.length > 0 && !usados.length) || Boolean(lerControle(code) && infoEntrada(code).pedra);
+    return { camada, usados, externos, pedra };
+  }
+
+  #marcarEntrada(el, code, destaques) {
+    el.dataset.code = code;
+    const { camada, usados, externos, pedra } = this.#usosDaEntrada(code);
+    if (usados.length) el.classList.add("ec-ocupada");
+    if (pedra) el.classList.add("ec-pedra");
     if (externos.length) {
-      const sistema = externos.some((x) => x.ocupacao.dono === "sistema");
-      el.classList.add("ec-externa", sistema ? "ec-do-sistema" : "ec-do-navegador");
-      if (!usados.length) el.classList.add("ec-ocupada", "ec-so-externa");
+      el.classList.add("ec-externa");
+      if (!usados.length) el.classList.add("ec-ocupada");
       const id = externos[0].ocupacao.grupo ? null : externos[0].ocupacao.id;
       el.append(no("span", "ec-marca", [icone(`fa-solid ${ICONE_DA_FUNCAO[id] ?? "fa-globe"}`)]));
     }
-    // Movimento do token e da câmera, como os analógicos do controle.
-    if (usados.some((a) => a.gesto)) el.classList.add("ec-composta");
-    const movimento = usados.find((a) => a.acao.movimento)?.acao.movimento;
-    if (movimento) el.classList.add("ec-movimento", `ec-mov-${movimento}`);
+    // Balões: toques seguidos (×2) e segurar (↓), de tecla composta ou de ação que age enquanto a tecla fica apertada
+    // (menos movimento e câmera, que são contínuos). Outros compostos (juntas, sequência): ponto no canto.
+    let vezes = 0;
+    let segurar = false;
+    let composta = false;
+    for (const a of usados) {
+      if (a.gesto) {
+        const p = a.gesto.pressoes;
+        if ((p.length >= 2) && p.every((x) => (x.teclas.length === 1) && (x.teclas[0] === code) && !x.segurar)) {
+          vezes = Math.max(vezes, p.length);
+        }
+        else if (p.some((x) => x.segurar && x.teclas.includes(code))) segurar = true;
+        else composta = true;
+      }
+      else if (a.acao.segurar && !a.acao.movimento) segurar = true;
+    }
+    const baloes = [];
+    if (vezes) baloes.push(no("span", "ec-balao", [`×${vezes}`]));
+    if (segurar) baloes.push(no("span", "ec-balao ec-balao-segurar", ["↓"]));
+    if (baloes.length) el.append(no("span", "ec-baloes", baloes));
+    if (composta) el.classList.add("ec-composta");
     // Funções diferentes no mesmo aperto desta camada (Foundry, navegador e sistema).
     const funcoes = new Set(usados.map((a) => a.acao.id)).size
       + new Set(externos.map((x) => x.ocupacao.chave ?? x.ocupacao.id)).size;
@@ -630,21 +681,19 @@ export class InterfacePerfis {
     }
     const mod = MODIFICADOR_DA_TECLA[code];
     if (mod && camada.has(mod)) el.classList.add("ec-camada");
-    if (this.#dados.protegidas.includes(code)) el.classList.add("ec-protegida");
     if (destaques.sel.has(code)) el.classList.add("ec-sel");
     if (destaques.mods.has(code)) el.classList.add("ec-mod");
     if (destaques.focos.has(code)) el.classList.add("ec-foco");
     const entrada = this.estado.entrada;
-    if (entrada && (entrada.key === code) && daCamada(entrada, camada)) el.classList.add("ec-filtrada");
+    if (entrada && (entrada.key === code) && (!entrada.camada || daCamada(entrada, camada))) el.classList.add("ec-filtrada");
     el.dataset.tooltipHtml = this.#dicaEntrada(code);
   }
 
   /** Dica de uma tecla: alcance e tudo que a usa, com e sem modificadores, no Foundry, no navegador e no sistema. */
   #dicaEntrada(code) {
-    const nivel = infoEntrada(code).nivel;
-    const linhas = [`<strong>${escapar(this.#rotuloEntrada(code))}</strong> · ${escapar(this.t(`Niveis.${NIVEIS[nivel]}`))}`];
-    if (this.#dados.protegidas.includes(code)) linhas.push(escapar(this.t("Ergonomia.protegida")));
-    const camada = this.#camadaAtual();
+    const { camada, pedra } = this.#usosDaEntrada(code);
+    const cab = pedra ? this.t("Visual.Pedra") : this.#dicaNivel(infoEntrada(code, {}, this.#dados.maos).nivel);
+    const linhas = [`<strong>${escapar(this.#rotuloEntrada(code))}</strong> · ${escapar(cab)}`];
     const primeiro = (a, b) => Number(daCamada(b.binding, camada)) - Number(daCamada(a.binding, camada));
     const usados = [...(this.#dados.porTecla.get(code) ?? [])].sort(primeiro);
     for (const atalho of usados.slice(0, 8)) {
@@ -663,13 +712,18 @@ export class InterfacePerfis {
     return this.fonte.rotulo({ key: code, modifiers: [] });
   }
 
+  /** Dica de um nível de alcance: o nome e o que ele quer dizer. */
+  #dicaNivel(nivel) {
+    return this.t(`Dicas.${NIVEIS[nivel]}`);
+  }
+
   #teclado() {
     const caixa = no("div", "ec-teclado");
     const destaques = this.#destaques();
     for (const tecla of TECLADO) {
       const rotulo = rotuloTecla(tecla.code, this.layout || null);
       const tamanho = (rotulo.length >= 4) ? " ec-longo" : (rotulo.length === 3) ? " ec-medio" : "";
-      const b = botao(`ec-tecla ec-z${infoEntrada(tecla.code).nivel}${tamanho}`, [no("span", "ec-rot", [rotulo])]);
+      const b = botao(`ec-tecla ec-z${infoEntrada(tecla.code, {}, this.#dados.maos).nivel}${tamanho}`, [no("span", "ec-rot", [rotulo])]);
       b.style.cssText = `--x:${tecla.x};--y:${tecla.y};--w:${tecla.w};--h:${tecla.h}`;
       this.#marcarEntrada(b, tecla.code, destaques);
       caixa.append(b);
@@ -682,8 +736,8 @@ export class InterfacePerfis {
     const destaques = this.#destaques();
     const corpo = no("div", "ec-mouse-corpo");
     const foundry = (classe, titulo, usos = []) => {
-      const d = no("div", `ec-mbotao ${classe} ec-foundry`);
-      d.dataset.tooltipHtml = [`<strong>${escapar(titulo)}</strong>`, ...usos.map(escapar)].join("<br>");
+      const d = no("div", `ec-mbotao ${classe} ec-foundry ec-pedra`);
+      d.dataset.tooltipHtml = [`<strong>${escapar(titulo)}</strong> · ${escapar(this.t("Visual.Pedra"))}`, ...usos.map(escapar)].join("<br>");
       return d;
     };
     corpo.append(
@@ -691,7 +745,7 @@ export class InterfacePerfis {
       foundry("ec-mdir", this.t("Visual.Direito"), ponteiro.direito)
     );
     for (const { code } of MOUSE) {
-      const b = botao(`ec-mbotao ec-${code.toLowerCase()} ec-z${infoEntrada(code).nivel}`, [no("span", "ec-rot", [code.slice(-1)])]);
+      const b = botao(`ec-mbotao ec-${code.toLowerCase()} ec-z${infoEntrada(code, {}, this.#dados.maos).nivel}`, [no("span", "ec-rot", [code.slice(-1)])]);
       this.#marcarEntrada(b, code, destaques);
       const usos = (code === "Mouse3") ? [...(ponteiro.meio ?? []), ...(ponteiro.rodinha ?? [])] : [];
       if (usos.length) b.dataset.tooltipHtml += `<br>${usos.map(escapar).join("<br>")}`;
@@ -721,7 +775,8 @@ export class InterfacePerfis {
     for (const [indice, x, y, w, h, forma] of CONTROLE_DESENHO) {
       const code = codigoBotao(id || "X", indice);
       const rotulo = rotuloControle({ tipo: "botao", id, indice });
-      const b = botao(`ec-cbotao ec-${forma} ec-z${infoEntrada(code).nivel}`, [no("span", "ec-rot", [rotulo])]);
+      const info = infoEntrada(code);
+      const b = botao(`ec-cbotao ec-${forma} ec-z${info.nivel}${info.pedra ? " ec-pedra" : ""}`, [no("span", "ec-rot", [rotulo])]);
       b.style.cssText = `--x:${x};--y:${y};--w:${w};--h:${h}`;
       if (id) this.#marcarEntrada(b, code, destaques);
       else b.dataset.tooltipText = rotulo;
@@ -758,23 +813,23 @@ export class InterfacePerfis {
     }
     const { acao, atalho } = foco;
     const av = atalho.avaliacao;
+    const pedra = av.pedra || Boolean(acao.externa);
     const nome = no("span", `ec-av-nome${acao.restrita ? " ec-restrita" : ""}`, [acao.nome]);
-    const topo = no("div", "ec-av-topo", [
-      nome,
-      no("span", `ec-atalho ec-n${av.nivel} ec-av-atalho`, [this.fonte.rotulo(atalho.binding)]),
-      no("span", `ec-av-nivel ec-n${av.nivel}`, [this.t(`Niveis.${NIVEIS[av.nivel]}`)])
-    ]);
+    const chip = no("span", `ec-atalho ${pedra ? "ec-pedra" : `ec-n${av.nivel}`} ec-av-atalho`, [this.fonte.rotulo(atalho.binding)]);
+    chip.dataset.tooltipText = pedra ? this.t("Visual.Pedra") : this.#dicaNivel(av.nivel);
+    const topo = no("div", "ec-av-topo", [nome, chip,
+      pedra ? no("span", "ec-av-nivel ec-pedra", [this.t("Visual.Pedra")]) : null]);
+    const partes = [topo];
     const motivos = no("ul", "ec-motivos", av.motivos.map((m) => no("li", `ec-motivo ec-m-${m.id}`, [this.#motivo(m)])));
-    if (acao.vezes && !av.motivos.some((m) => m.id === "frequenteLonge")) {
-      motivos.append(no("li", "ec-motivo ec-m-uso", [this.t("Lista.Usada", { n: this.#numero(acao.vezes) })]));
-    }
-    const partes = [topo, motivos];
-    if (!atalho.fixo && !acao.externa && ((av.nivel >= NIVEL.ESTICAR) || atalho.colisoes?.size)) {
-      const livres = sugerir((b) => this.#ocupada(b), 6, lerControle(atalho.binding.key)?.id ?? null);
+    if (acao.vezes) motivos.append(no("li", "ec-motivo ec-m-uso", [this.#usada(acao.vezes)]));
+    if (motivos.childElementCount) partes.push(motivos);
+    if (!atalho.fixo && !acao.externa && !pedra && ((av.nivel >= NIVEL.ESTICAR) || atalho.colisoes?.size)) {
+      const controle = lerControle(teclasDe(atalho.binding.key)[0])?.id ?? null;
+      const livres = sugerir((b) => this.#ocupada(b), 6, controle, this.#dados.maos);
       if (livres.length) {
         partes.push(no("div", "ec-sugestoes", [
           no("span", "ec-sugestoes-rotulo", [this.t("Avaliacao.Livres")]),
-          ...livres.map((b) => botao(`ec-sugestao ec-atalho ec-n${infoEntrada(b.key).nivel}`, [this.fonte.rotulo(b)],
+          ...livres.map((b) => botao(`ec-sugestao ec-atalho ec-n${infoEntrada(b.key, {}, this.#dados.maos).nivel}`, [this.fonte.rotulo(b)],
             { key: b.key, mods: b.modifiers.join(",") }))
         ]));
       }
@@ -790,7 +845,6 @@ export class InterfacePerfis {
     if (d.vezes !== undefined) dados.vezes = this.#numero(d.vezes);
     if (d.nomes) dados.nomes = this.fonte.lista?.(d.nomes) ?? d.nomes.join(", ");
     if (d.funcao !== undefined) dados.funcao = d.funcao;
-    if (d.dono !== undefined) dados.dono = d.dono;
     for (const k of ["tecla", "gesto", "nome"]) if (d[k] !== undefined) dados[k] = d[k];
     return this.t(`Ergonomia.${m.id}`, dados);
   }
@@ -802,7 +856,7 @@ export class InterfacePerfis {
       if (!n) return;
       const seg = no("span", `ec-resumo-seg ec-n${i}`, [this.#numero(n)]);
       seg.style.flexGrow = String(n);
-      seg.dataset.tooltipText = this.t(`Niveis.${NIVEIS[i]}`);
+      seg.dataset.tooltipText = this.#dicaNivel(i);
       barra.append(seg);
     });
     const entradas = [...d.porTecla].filter(([k, l]) => l.length && !ehGesto(k)).length;
@@ -810,8 +864,16 @@ export class InterfacePerfis {
       this.t("Resumo.Atalhos", { acoes: this.#numero(d.contagem.comAtalho), entradas: this.#numero(entradas) })
     ]);
     if (d.contagem.colisoes) numeros.append(" · ", this.t("Resumo.Colisoes", { n: this.#numero(d.contagem.colisoes) }));
-    if (d.uso.suficiente && d.contagem.semUso) numeros.append(" · ", this.t("Resumo.SemUso", { n: this.#numero(d.contagem.semUso) }));
-    return no("div", "ec-resumo", [barra, numeros]);
+    // Veredito: quantas ações com atalho fazem trocar de mão (ou tirar a mão do mouse).
+    const longe = d.niveis[NIVEL.TROCA] + d.niveis[NIVEL.EVITAR];
+    const total = d.contagem.comAtalho;
+    let veredito = null;
+    if (total) {
+      if (!longe) veredito = this.t("Resumo.Perto");
+      else if ((longe * 2) >= total) veredito = this.t("Resumo.Longe");
+      else veredito = this.t("Resumo.Algumas", { n: this.#numero(longe) });
+    }
+    return no("div", "ec-resumo", [barra, numeros, veredito ? no("p", "ec-resumo-veredito", [veredito]) : null]);
   }
 
   /* -------------------------------------------- */
@@ -825,14 +887,13 @@ export class InterfacePerfis {
     if (d.acao) return this.#acaoDaBarra(d.acao);
     if (d.filtro) {
       this.estado.filtro = d.filtro;
+      if (this.estado.entrada) {
+        this.estado.entrada = null;
+        this.busca.value = this.estado.busca;
+        this.#renderVisual();
+      }
       this.#renderFiltros();
       return this.#renderLista();
-    }
-    if (d.limparEntrada) {
-      this.estado.entrada = null;
-      this.#renderFiltros();
-      this.#renderLista();
-      return this.#renderVisual();
     }
     if (d.aba) {
       this.estado.aba = d.aba;
@@ -870,9 +931,14 @@ export class InterfacePerfis {
         this.estado.camada = camada;
         return this.#renderDesenho();
       }
-      const nova = { key: d.code, modifiers: [...this.#camadaAtual()] };
+      // A tecla vai para a busca da lista: tudo o que a usa, em qualquer camada (ou só na de modificadores escolhida).
+      const camada = this.#camadaAtual();
+      const nova = { key: d.code, modifiers: [...camada], camada: camada.size > 0 };
       const atual = this.estado.entrada;
-      this.estado.entrada = (atual && (chaveAtalho(atual) === chaveAtalho(nova))) ? null : nova;
+      const mesma = atual && (chaveAtalho(atual) === chaveAtalho(nova));
+      this.estado.entrada = mesma ? null : nova;
+      this.estado.busca = "";
+      this.busca.value = this.estado.entrada ? this.fonte.rotulo(nova.camada ? nova : { key: nova.key, modifiers: [] }) : "";
       this.#renderFiltros();
       this.#renderLista();
       return this.#renderVisual();

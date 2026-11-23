@@ -4,8 +4,8 @@
  * (configuração `perfis`, escopo user). O perfil ativo acompanha toda mudança de atalho, venha de onde vier, e é
  * aplicado ao carregar quando o mapeamento do navegador difere dele (outro computador, dados do navegador limpos).
  *
- * Contagem de uso (configuração `uso`, escopo user): cada ação conta os acionamentos sem repetição, para mostrar o
- * que é mais usado e o que nunca é usado.
+ * Contagem de uso (configuração `uso`, escopo user): cada ação conta os acionamentos sem repetição, contados sozinhos
+ * desde a primeira carga do módulo, para mostrar quantas vezes cada ação foi usada e o que é mais usado.
  */
 
 import { MODULE_ID, LANG } from "./navegador.mjs";
@@ -239,9 +239,6 @@ const seguradas = new Set();
 
 /** Intervalo mínimo entre gravações da contagem. */
 const GRAVAR_USO_MS = 30_000;
-/** Histórico mínimo para chamar uma ação de "sem uso". */
-const HISTORICO_MS = 3 * 24 * 3600 * 1000;
-const HISTORICO_TOTAL = 100;
 
 function gravarUso() {
   clearTimeout(uso.timer);
@@ -299,16 +296,12 @@ export function iniciarUso() {
   });
 }
 
-/**
- * @returns {{contagem: Record<string, number>, total: number, desde: number, suficiente: boolean,
- *   frequentes: Set<string>}}
- */
+/** @returns {{contagem: Record<string, number>, total: number, desde: number, frequentes: Set<string>}} */
 export function estatisticasUso() {
   const contagem = { ...uso.contagem };
   const valores = Object.values(contagem);
   const total = valores.reduce((s, v) => s + v, 0);
   const minimo = Math.max(10, total * 0.05);
   const frequentes = new Set(Object.entries(contagem).filter(([, v]) => v >= minimo).map(([k]) => k));
-  const suficiente = ((Date.now() - uso.desde) >= HISTORICO_MS) && (total >= HISTORICO_TOTAL);
-  return { contagem, total, desde: uso.desde, suficiente, frequentes };
+  return { contagem, total, desde: uso.desde, frequentes };
 }
