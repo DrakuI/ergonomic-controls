@@ -164,7 +164,15 @@ export class InterfacePerfis {
     this.sumidouro = no("span", "ec-sumidouro");
     this.sumidouro.tabIndex = -1;
     this.sumidouro.dataset.keyboardFocus = "true";
-    this.el.append(this.barra, no("div", "ec-corpo", [this.lista, this.visual]), this.sumidouro);
+    // Páginas do autor no pé da janela: links comuns, que abrem em outra aba.
+    this.rodape = no("footer", "ec-rodape", (this.fonte.paginas ?? []).map((p) => {
+      const a = no("a", `ec-pagina ec-pagina-${p.id}`, [icone(p.icone), p.nome]);
+      a.href = p.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      return a;
+    }));
+    this.el.append(this.barra, no("div", "ec-corpo", [this.lista, this.visual]), this.rodape, this.sumidouro);
   }
 
   #ligar() {

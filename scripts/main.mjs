@@ -5,12 +5,14 @@
  *   do mouse em teclas para os atalhos.
  * - perfis.mjs: perfis de atalhos por usuário e contagem de uso.
  * - app.mjs + interface.mjs: janela dos perfis (menu nas configurações do módulo).
+ * - apoio.mjs: atalhos para as páginas do autor.
  * - ergonomia.mjs: modelo de alcance e avaliação de atalhos.
  * - gestos.mjs: teclas compostas (duas vezes, segurar, juntas, em sequência) entre os eventos e o KeyboardManager.
  */
 
 import { MODULE_ID, LANG, PADROES, config, instalar, aplicar } from "./navegador.mjs";
 import { AppPerfis, rotuloGesto } from "./app.mjs";
+import { atalhosNasConfiguracoes } from "./apoio.mjs";
 import * as gestos from "./gestos.mjs";
 import * as perfis from "./perfis.mjs";
 import { MOUSE, lerControle, rotuloControle, idControle, codigoBotao, codigoEixo } from "./ergonomia.mjs";
@@ -152,6 +154,7 @@ if (!globalThis[MARCA]) {
   });
   Hooks.on("openDetachedWindow", (_id, win) => instalar(win, false));
   Hooks.on("renderSettingsConfig", avisoNasConfiguracoes);
+  Hooks.on("renderSettingsConfig", atalhosNasConfiguracoes);
   window.addEventListener("gamepadconnected", (event) => {
     if (event.gamepad) rotularEntradas(codigosDoControle(event.gamepad));
   });

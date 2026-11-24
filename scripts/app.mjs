@@ -5,6 +5,7 @@
 
 import { MODULE_ID, LANG, NAVEGADOR, ocupacoesAtuais } from "./navegador.mjs";
 import { InterfacePerfis } from "./interface.mjs";
+import { PAGINAS } from "./apoio.mjs";
 import * as perfis from "./perfis.mjs";
 import { MOUSE, lerControle, rotuloControle, rotuloTecla, idControle, ehModificador } from "./ergonomia.mjs";
 import { lerGesto } from "./gestos.mjs";
@@ -281,6 +282,7 @@ export function criarFonte() {
       return (typeof nome === "string") ? nome : null;
     },
     aviso: (texto, tipo = "info") => ui.notifications[tipo]?.(texto),
+    paginas: PAGINAS,
     aoMudar: perfis.aoMudar
   };
 }
